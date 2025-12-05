@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { ExternalLink, ArrowUpDown, ArrowUp, ArrowDown } from "lucide-react";
+import { ExternalLink, ArrowUpDown, ArrowUp, ArrowDown, GraduationCap, CheckCircle2 } from "lucide-react";
 import {
   Table,
   TableBody,
@@ -11,9 +11,20 @@ import {
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Certification } from "@/data/certifications";
+import { FavoriteButton } from "./FavoriteButton";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
 
 interface CertificationsTableProps {
   certifications: Certification[];
+  onToggleFavorite?: (id: string) => void;
+  isFavorite?: (id: string) => boolean;
+  onApplyFunding?: (cert: Certification) => void;
+  hasApplied?: (id: string) => boolean;
+  isCompleted?: (id: string) => boolean;
 }
 
 type SortKey = keyof Certification;
@@ -49,7 +60,14 @@ const getQualityColor = (quality: string) => {
   }
 };
 
-export const CertificationsTable = ({ certifications }: CertificationsTableProps) => {
+export const CertificationsTable = ({
+  certifications,
+  onToggleFavorite,
+  isFavorite,
+  onApplyFunding,
+  hasApplied,
+  isCompleted,
+}: CertificationsTableProps) => {
   const [sortKey, setSortKey] = useState<SortKey | null>(null);
   const [sortDirection, setSortDirection] = useState<SortDirection>(null);
 
@@ -113,6 +131,7 @@ export const CertificationsTable = ({ certifications }: CertificationsTableProps
         <Table>
           <TableHeader>
             <TableRow className="bg-table-header hover:bg-table-header">
+              {onToggleFavorite && <TableHead className="w-[50px]"></TableHead>}
               <TableHead className="min-w-[250px]">
                 <SortableHeader columnKey="certificationName">Name</SortableHeader>
               </TableHead>
@@ -134,59 +153,104 @@ export const CertificationsTable = ({ certifications }: CertificationsTableProps
               <TableHead className="min-w-[100px] text-right">
                 <SortableHeader columnKey="priceInEUR">Price (EUR)</SortableHeader>
               </TableHead>
-              <TableHead className="min-w-[200px]">Notes</TableHead>
-              <TableHead className="w-[80px]">Link</TableHead>
+              <TableHead className="w-[120px]">Actions</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
             {sortedCertifications.length === 0 ? (
               <TableRow>
-                <TableCell colSpan={9} className="h-32 text-center text-muted-foreground">
+                <TableCell colSpan={onToggleFavorite ? 10 : 9} className="h-32 text-center text-muted-foreground">
                   No certifications found matching your filters.
                 </TableCell>
               </TableRow>
             ) : (
-              sortedCertifications.map((cert) => (
-                <TableRow 
-                  key={cert.id} 
-                  className="hover:bg-table-row-hover transition-colors"
-                >
-                  <TableCell className="font-medium">{cert.certificationName}</TableCell>
-                  <TableCell>
-                    <Badge variant="outline" className="font-normal">
-                      {cert.area}
-                    </Badge>
-                  </TableCell>
-                  <TableCell className="text-muted-foreground">{cert.languageFramework}</TableCell>
-                  <TableCell className="text-muted-foreground">{cert.provider}</TableCell>
-                  <TableCell>
-                    <Badge variant="outline" className={getLevelColor(cert.level)}>
-                      {cert.level}
-                    </Badge>
-                  </TableCell>
-                  <TableCell>
-                    <Badge variant="outline" className={getQualityColor(cert.certificateQuality)}>
-                      {cert.certificateQuality}
-                    </Badge>
-                  </TableCell>
-                  <TableCell className="text-right font-medium">€{cert.priceInEUR}</TableCell>
-                  <TableCell className="text-sm text-muted-foreground max-w-[200px] truncate">
-                    {cert.notes}
-                  </TableCell>
-                  <TableCell>
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      className="h-8 w-8 p-0"
-                      asChild
-                    >
-                      <a href={cert.url} target="_blank" rel="noopener noreferrer">
-                        <ExternalLink className="h-4 w-4" />
-                      </a>
-                    </Button>
-                  </TableCell>
-                </TableRow>
-              ))
+              sortedCertifications.map((cert) => {
+                const applied = hasApplied?.(cert.id);
+                const completed = isCompleted?.(cert.id);
+                return (
+                  <TableRow 
+                    key={cert.id} 
+                    className="hover:bg-table-row-hover transition-colors"
+                  >
+                    {onToggleFavorite && isFavorite && (
+                      <TableCell>
+                        <FavoriteButton
+                          isFavorite={isFavorite(cert.id)}
+                          onToggle={() => onToggleFavorite(cert.id)}
+                        />
+                      </TableCell>
+                    )}
+                    <TableCell className="font-medium">
+                      <div className="flex items-center gap-2">
+                        {cert.certificationName}
+                        {completed && (
+                          <Tooltip>
+                            <TooltipTrigger>
+                              <CheckCircle2 className="h-4 w-4 text-success" />
+                            </TooltipTrigger>
+                            <TooltipContent>You've completed this certification</TooltipContent>
+                          </Tooltip>
+                        )}
+                      </div>
+                    </TableCell>
+                    <TableCell>
+                      <Badge variant="outline" className="font-normal">
+                        {cert.area}
+                      </Badge>
+                    </TableCell>
+                    <TableCell className="text-muted-foreground">{cert.languageFramework}</TableCell>
+                    <TableCell className="text-muted-foreground">{cert.provider}</TableCell>
+                    <TableCell>
+                      <Badge variant="outline" className={getLevelColor(cert.level)}>
+                        {cert.level}
+                      </Badge>
+                    </TableCell>
+                    <TableCell>
+                      <Badge variant="outline" className={getQualityColor(cert.certificateQuality)}>
+                        {cert.certificateQuality}
+                      </Badge>
+                    </TableCell>
+                    <TableCell className="text-right font-medium">€{cert.priceInEUR}</TableCell>
+                    <TableCell>
+                      <div className="flex items-center gap-1">
+                        {onApplyFunding && (
+                          <Tooltip>
+                            <TooltipTrigger asChild>
+                              <Button
+                                variant={applied ? "secondary" : "outline"}
+                                size="sm"
+                                className="h-8 w-8 p-0"
+                                onClick={() => onApplyFunding(cert)}
+                                disabled={applied}
+                              >
+                                <GraduationCap className="h-4 w-4" />
+                              </Button>
+                            </TooltipTrigger>
+                            <TooltipContent>
+                              {applied ? "Application submitted" : "Apply for funding"}
+                            </TooltipContent>
+                          </Tooltip>
+                        )}
+                        <Tooltip>
+                          <TooltipTrigger asChild>
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              className="h-8 w-8 p-0"
+                              asChild
+                            >
+                              <a href={cert.url} target="_blank" rel="noopener noreferrer">
+                                <ExternalLink className="h-4 w-4" />
+                              </a>
+                            </Button>
+                          </TooltipTrigger>
+                          <TooltipContent>Open certification page</TooltipContent>
+                        </Tooltip>
+                      </div>
+                    </TableCell>
+                  </TableRow>
+                );
+              })
             )}
           </TableBody>
         </Table>
