@@ -171,8 +171,8 @@ export const CertificationsTable = ({
               <TableHead className="min-w-[80px]">
                 <SortableHeader columnKey="certificateQuality">Quality</SortableHeader>
               </TableHead>
-              <TableHead className="min-w-[100px] text-right">
-                <SortableHeader columnKey="priceInEUR">Price (EUR)</SortableHeader>
+              <TableHead className="min-w-[100px]">
+                <SortableHeader columnKey="priceInEUR">Price</SortableHeader>
               </TableHead>
               <TableHead className="w-[120px]">Actions</TableHead>
             </TableRow>
@@ -231,28 +231,27 @@ export const CertificationsTable = ({
                     <TableCell>
                       <QualitySeal quality={cert.certificateQuality} />
                     </TableCell>
-                    <TableCell className="text-right tabular-nums font-body font-semibold text-foreground">
-                      €{cert.priceInEUR.toLocaleString()}
+                    <TableCell className="tabular-nums font-body font-semibold text-foreground">
+                      {cert.priceInEUR.toLocaleString()}€
                     </TableCell>
                     <TableCell>
                       <div className="flex items-center gap-1">
                         {onApplyFunding && (
-                          <Tooltip>
-                            <TooltipTrigger asChild>
-                              <Button
-                                variant={applied ? "secondary" : "outline"}
-                                size="sm"
-                                className="h-8 w-8 p-0 rounded-lg"
-                                onClick={() => onApplyFunding(cert)}
-                                disabled={applied}
-                              >
-                                <GraduationCap className="h-4 w-4" />
-                              </Button>
-                            </TooltipTrigger>
-                            <TooltipContent>
-                              {applied ? "Application submitted" : "Apply for funding"}
-                            </TooltipContent>
-                          </Tooltip>
+                          applied ? (
+                            <span className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium text-success bg-success/10 rounded-full">
+                              <CheckCircle2 className="h-3.5 w-3.5" />
+                              Applied
+                            </span>
+                          ) : (
+                            <Button
+                              size="sm"
+                              className="h-8 px-4 bg-gradient-to-r from-primary to-primary/80 hover:from-primary/90 hover:to-primary/70 text-primary-foreground font-medium shadow-sm hover:shadow-md transition-all duration-200 rounded-full"
+                              onClick={() => onApplyFunding(cert)}
+                            >
+                              <GraduationCap className="h-3.5 w-3.5 mr-1.5" />
+                              Apply
+                            </Button>
+                          )
                         )}
                         <Tooltip>
                           <TooltipTrigger asChild>
