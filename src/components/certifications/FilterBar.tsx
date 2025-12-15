@@ -32,7 +32,7 @@ export const FilterBar = ({
   const hasActiveFilters = Object.values(filters).some(v => v !== "all");
 
   return (
-    <div className="flex flex-wrap items-end gap-4">
+    <div className="flex flex-wrap items-end gap-3 p-4 rounded-xl bg-card/60 backdrop-blur-sm border border-border/40">
       <FilterSelect
         label="Area"
         value={filters.area}
@@ -68,10 +68,10 @@ export const FilterBar = ({
           variant="ghost"
           size="sm"
           onClick={onClearFilters}
-          className="h-9 text-muted-foreground hover:text-foreground"
+          className="h-9 text-muted-foreground hover:text-destructive hover:bg-destructive/10 rounded-lg transition-colors"
         >
           <X className="mr-1 h-4 w-4" />
-          Clear filters
+          Clear all
         </Button>
       )}
     </div>

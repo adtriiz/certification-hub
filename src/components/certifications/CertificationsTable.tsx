@@ -33,30 +33,30 @@ type SortDirection = "asc" | "desc" | null;
 const getLevelColor = (level: string) => {
   switch (level.toLowerCase()) {
     case "foundation":
-      return "bg-secondary text-secondary-foreground";
+      return "bg-secondary text-secondary-foreground border-border";
     case "associate":
-      return "bg-info/10 text-info border-info/20";
+      return "bg-info/10 text-info border-info/30";
     case "intermediate":
-      return "bg-warning/10 text-warning border-warning/20";
+      return "bg-warning/10 text-warning border-warning/30";
     case "professional":
-      return "bg-primary/10 text-primary border-primary/20";
+      return "bg-primary/10 text-primary border-primary/30";
     case "expert":
-      return "bg-destructive/10 text-destructive border-destructive/20";
+      return "bg-accent/10 text-accent border-accent/30";
     default:
-      return "bg-secondary text-secondary-foreground";
+      return "bg-secondary text-secondary-foreground border-border";
   }
 };
 
 const getQualityColor = (quality: string) => {
   switch (quality.toLowerCase()) {
     case "high":
-      return "bg-success/10 text-success border-success/20";
+      return "bg-success/10 text-success border-success/30";
     case "medium":
-      return "bg-warning/10 text-warning border-warning/20";
+      return "bg-warning/10 text-warning border-warning/30";
     case "low":
-      return "bg-muted text-muted-foreground";
+      return "bg-muted text-muted-foreground border-border";
     default:
-      return "bg-secondary text-secondary-foreground";
+      return "bg-secondary text-secondary-foreground border-border";
   }
 };
 
@@ -106,18 +106,18 @@ export const CertificationsTable = ({
 
   const SortIcon = ({ columnKey }: { columnKey: SortKey }) => {
     if (sortKey !== columnKey) {
-      return <ArrowUpDown className="ml-1 h-3 w-3 opacity-50" />;
+      return <ArrowUpDown className="ml-1 h-3 w-3 opacity-40" />;
     }
     return sortDirection === "asc" 
-      ? <ArrowUp className="ml-1 h-3 w-3" />
-      : <ArrowDown className="ml-1 h-3 w-3" />;
+      ? <ArrowUp className="ml-1 h-3 w-3 text-primary" />
+      : <ArrowDown className="ml-1 h-3 w-3 text-primary" />;
   };
 
   const SortableHeader = ({ columnKey, children }: { columnKey: SortKey; children: React.ReactNode }) => (
     <Button
       variant="ghost"
       size="sm"
-      className="-ml-3 h-8 font-semibold hover:bg-transparent"
+      className="-ml-3 h-8 font-semibold hover:bg-transparent hover:text-primary transition-colors"
       onClick={() => handleSort(columnKey)}
     >
       {children}
@@ -126,11 +126,11 @@ export const CertificationsTable = ({
   );
 
   return (
-    <div className="rounded-lg border border-border bg-card overflow-hidden">
+    <div className="rounded-xl border border-border/60 bg-card/80 backdrop-blur-sm overflow-hidden shadow-soft">
       <div className="overflow-x-auto">
         <Table>
           <TableHeader>
-            <TableRow className="bg-table-header hover:bg-table-header">
+            <TableRow className="bg-table-header hover:bg-table-header border-b border-border/60">
               {onToggleFavorite && <TableHead className="w-[50px]"></TableHead>}
               <TableHead className="min-w-[250px]">
                 <SortableHeader columnKey="certificationName">Name</SortableHeader>
@@ -160,17 +160,21 @@ export const CertificationsTable = ({
             {sortedCertifications.length === 0 ? (
               <TableRow>
                 <TableCell colSpan={onToggleFavorite ? 10 : 9} className="h-32 text-center text-muted-foreground">
-                  No certifications found matching your filters.
+                  <div className="flex flex-col items-center gap-2">
+                    <GraduationCap className="h-8 w-8 opacity-30" />
+                    <span>No certifications found matching your filters.</span>
+                  </div>
                 </TableCell>
               </TableRow>
             ) : (
-              sortedCertifications.map((cert) => {
+              sortedCertifications.map((cert, index) => {
                 const applied = hasApplied?.(cert.id);
                 const completed = isCompleted?.(cert.id);
                 return (
                   <TableRow 
                     key={cert.id} 
-                    className="hover:bg-table-row-hover transition-colors"
+                    className="hover:bg-table-row-hover transition-colors border-b border-border/40"
+                    style={{ animationDelay: `${index * 0.02}s` }}
                   >
                     {onToggleFavorite && isFavorite && (
                       <TableCell>
@@ -182,7 +186,7 @@ export const CertificationsTable = ({
                     )}
                     <TableCell className="font-medium">
                       <div className="flex items-center gap-2">
-                        {cert.certificationName}
+                        <span className="text-foreground">{cert.certificationName}</span>
                         {completed && (
                           <Tooltip>
                             <TooltipTrigger>
@@ -194,7 +198,7 @@ export const CertificationsTable = ({
                       </div>
                     </TableCell>
                     <TableCell>
-                      <Badge variant="outline" className="font-normal">
+                      <Badge variant="outline" className="font-normal border-border/60">
                         {cert.area}
                       </Badge>
                     </TableCell>
@@ -210,7 +214,7 @@ export const CertificationsTable = ({
                         {cert.certificateQuality}
                       </Badge>
                     </TableCell>
-                    <TableCell className="text-right font-medium">€{cert.priceInEUR}</TableCell>
+                    <TableCell className="text-right font-semibold text-foreground">€{cert.priceInEUR}</TableCell>
                     <TableCell>
                       <div className="flex items-center gap-1">
                         {onApplyFunding && (
@@ -219,7 +223,7 @@ export const CertificationsTable = ({
                               <Button
                                 variant={applied ? "secondary" : "outline"}
                                 size="sm"
-                                className="h-8 w-8 p-0"
+                                className="h-8 w-8 p-0 rounded-lg"
                                 onClick={() => onApplyFunding(cert)}
                                 disabled={applied}
                               >
@@ -236,7 +240,7 @@ export const CertificationsTable = ({
                             <Button
                               variant="ghost"
                               size="sm"
-                              className="h-8 w-8 p-0"
+                              className="h-8 w-8 p-0 rounded-lg hover:bg-primary/10 hover:text-primary"
                               asChild
                             >
                               <a href={cert.url} target="_blank" rel="noopener noreferrer">
