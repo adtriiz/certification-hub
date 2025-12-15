@@ -248,7 +248,7 @@ export const CertificationsTable = ({
                               className="h-8 px-4 bg-gradient-to-r from-primary to-primary/80 hover:from-primary/90 hover:to-primary/70 text-primary-foreground font-medium shadow-sm hover:shadow-md transition-all duration-200 rounded-full"
                               onClick={() => onApplyFunding(cert)}
                             >
-                              <GraduationCap className="h-3.5 w-3.5 mr-1.5" />
+                              <GraduationCap className="h-3.5 w-3.5 mr-0.5" />
                               Apply
                             </Button>
                           )
