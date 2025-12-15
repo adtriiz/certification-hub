@@ -115,15 +115,24 @@
     font-family: 'DM Sans', system-ui, sans-serif;
   }
 
-  h1, h2, h3, h4, h5, h6 {
+  h1 {
     font-family: 'Instrument Serif', Georgia, serif;
     font-weight: 400;
+  }
+
+  h2, h3, h4, h5, h6 {
+    font-family: 'Libre Franklin', system-ui, sans-serif;
+    font-weight: 600;
   }
 }
 
 @layer utilities {
   .font-display {
     font-family: 'Instrument Serif', Georgia, serif;
+  }
+
+  .font-heading {
+    font-family: 'Libre Franklin', system-ui, sans-serif;
   }
 
   .font-body {
