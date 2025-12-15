@@ -30,34 +30,55 @@ interface CertificationsTableProps {
 type SortKey = keyof Certification;
 type SortDirection = "asc" | "desc" | null;
 
-const getLevelColor = (level: string) => {
-  switch (level.toLowerCase()) {
-    case "foundation":
-      return "bg-secondary text-secondary-foreground border-border";
-    case "associate":
-      return "bg-info/10 text-info border-info/30";
-    case "intermediate":
-      return "bg-warning/10 text-warning border-warning/30";
-    case "professional":
-      return "bg-primary/10 text-primary border-primary/30";
-    case "expert":
-      return "bg-accent/10 text-accent border-accent/30";
-    default:
-      return "bg-secondary text-secondary-foreground border-border";
-  }
+const getLevelIndex = (level: string): number => {
+  const levels = ["foundation", "associate", "intermediate", "professional", "expert"];
+  return levels.indexOf(level.toLowerCase());
 };
 
-const getQualityColor = (quality: string) => {
-  switch (quality.toLowerCase()) {
-    case "high":
-      return "bg-success/10 text-success border-success/30";
-    case "medium":
-      return "bg-warning/10 text-warning border-warning/30";
-    case "low":
-      return "bg-muted text-muted-foreground border-border";
-    default:
-      return "bg-secondary text-secondary-foreground border-border";
-  }
+const LevelMeter = ({ level }: { level: string }) => {
+  const index = getLevelIndex(level);
+  const segments = 5;
+  
+  return (
+    <div className="flex items-center gap-1">
+      <div className="flex gap-0.5">
+        {Array.from({ length: segments }).map((_, i) => (
+          <div
+            key={i}
+            className={`h-3 w-1.5 rounded-sm transition-colors ${
+              i <= index 
+                ? "bg-primary" 
+                : "bg-border"
+            }`}
+          />
+        ))}
+      </div>
+      <span className="ml-1.5 text-xs text-muted-foreground capitalize">{level}</span>
+    </div>
+  );
+};
+
+const QualitySeal = ({ quality }: { quality: string }) => {
+  const getConfig = () => {
+    switch (quality.toLowerCase()) {
+      case "high":
+        return { color: "text-success", bg: "bg-success/10", ring: "ring-success/20", label: "★★★" };
+      case "medium":
+        return { color: "text-warning", bg: "bg-warning/10", ring: "ring-warning/20", label: "★★" };
+      case "low":
+        return { color: "text-muted-foreground", bg: "bg-muted", ring: "ring-border", label: "★" };
+      default:
+        return { color: "text-muted-foreground", bg: "bg-muted", ring: "ring-border", label: "–" };
+    }
+  };
+  
+  const config = getConfig();
+  
+  return (
+    <div className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full ${config.bg} ring-1 ${config.ring}`}>
+      <span className={`text-xs font-medium ${config.color}`}>{config.label}</span>
+    </div>
+  );
 };
 
 export const CertificationsTable = ({
@@ -205,16 +226,14 @@ export const CertificationsTable = ({
                     <TableCell className="text-muted-foreground">{cert.languageFramework}</TableCell>
                     <TableCell className="text-muted-foreground">{cert.provider}</TableCell>
                     <TableCell>
-                      <Badge variant="outline" className={getLevelColor(cert.level)}>
-                        {cert.level}
-                      </Badge>
+                      <LevelMeter level={cert.level} />
                     </TableCell>
                     <TableCell>
-                      <Badge variant="outline" className={getQualityColor(cert.certificateQuality)}>
-                        {cert.certificateQuality}
-                      </Badge>
+                      <QualitySeal quality={cert.certificateQuality} />
                     </TableCell>
-                    <TableCell className="text-right font-semibold text-foreground">€{cert.priceInEUR}</TableCell>
+                    <TableCell className="text-right tabular-nums font-body font-semibold text-foreground">
+                      €{cert.priceInEUR.toLocaleString()}
+                    </TableCell>
                     <TableCell>
                       <div className="flex items-center gap-1">
                         {onApplyFunding && (
