@@ -1,5 +1,5 @@
 import { useState, useMemo } from "react";
-import { Award, Database, Heart, FileText, GraduationCap, Plus } from "lucide-react";
+import { Award, Heart, FileText, GraduationCap, Plus, Sparkles } from "lucide-react";
 import { SearchBar } from "@/components/certifications/SearchBar";
 import { FilterBar, Filters } from "@/components/certifications/FilterBar";
 import { CertificationsTable } from "@/components/certifications/CertificationsTable";
@@ -63,10 +63,8 @@ const Index = () => {
 
   const filteredCertifications = useMemo(() => {
     return mockCertifications.filter((cert) => {
-      // Favorites filter
       if (showFavoritesOnly && !isFavorite(cert.id)) return false;
 
-      // Search filter
       if (searchQuery) {
         const query = searchQuery.toLowerCase();
         const searchableText = [
@@ -82,7 +80,6 @@ const Index = () => {
         if (!searchableText.includes(query)) return false;
       }
 
-      // Dropdown filters
       if (filters.area !== "all" && cert.area !== filters.area) return false;
       if (filters.languageFramework !== "all" && cert.languageFramework !== filters.languageFramework) return false;
       if (filters.provider !== "all" && cert.provider !== filters.provider) return false;
@@ -133,20 +130,23 @@ const Index = () => {
   };
 
   return (
-    <div className="min-h-screen bg-background">
+    <div className="min-h-screen bg-background relative">
+      {/* Subtle background pattern */}
+      <div className="fixed inset-0 bg-[radial-gradient(ellipse_at_top,_var(--tw-gradient-stops))] from-secondary/50 via-background to-background pointer-events-none" />
+      
       {/* Header */}
-      <header className="border-b border-border bg-card">
-        <div className="container py-6">
-          <div className="flex items-center gap-3">
-            <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-primary/10">
-              <Award className="h-5 w-5 text-primary" />
+      <header className="relative border-b border-border/60 bg-card/80 backdrop-blur-sm">
+        <div className="container py-8">
+          <div className="animate-fade-up flex items-end gap-4">
+            <div className="flex h-14 w-14 items-center justify-center rounded-2xl bg-primary shadow-warm">
+              <Award className="h-7 w-7 text-primary-foreground" />
             </div>
             <div>
-              <h1 className="text-xl font-semibold text-foreground">
+              <h1 className="font-display text-4xl text-foreground tracking-tight">
                 Certification Portal
               </h1>
-              <p className="text-sm text-muted-foreground">
-                Browse, apply for funding, and track your certifications
+              <p className="text-muted-foreground mt-1">
+                Discover opportunities, apply for funding, track your growth
               </p>
             </div>
           </div>
@@ -154,90 +154,95 @@ const Index = () => {
       </header>
 
       {/* Main Content */}
-      <main className="container py-6">
-        <Tabs defaultValue="browse" className="space-y-6">
-          <TabsList>
-            <TabsTrigger value="browse" className="gap-2">
-              <Database className="h-4 w-4" />
-              Browse
-            </TabsTrigger>
-            <TabsTrigger value="applications" className="gap-2">
-              <FileText className="h-4 w-4" />
-              My Applications
-              {applications.length > 0 && (
-                <Badge variant="secondary" className="ml-1">
-                  {applications.length}
-                </Badge>
-              )}
-            </TabsTrigger>
-            <TabsTrigger value="certifications" className="gap-2">
-              <GraduationCap className="h-4 w-4" />
-              My Certifications
-              {completedCertifications.length > 0 && (
-                <Badge variant="secondary" className="ml-1">
-                  {completedCertifications.length}
-                </Badge>
-              )}
-            </TabsTrigger>
-          </TabsList>
+      <main className="relative container py-8">
+        <Tabs defaultValue="browse" className="space-y-8">
+          <div className="animate-fade-up animate-stagger-1">
+            <TabsList className="bg-card/80 backdrop-blur-sm border border-border/60 p-1 shadow-soft">
+              <TabsTrigger value="browse" className="gap-2 data-[state=active]:bg-primary data-[state=active]:text-primary-foreground">
+                <Sparkles className="h-4 w-4" />
+                Browse
+              </TabsTrigger>
+              <TabsTrigger value="applications" className="gap-2 data-[state=active]:bg-primary data-[state=active]:text-primary-foreground">
+                <FileText className="h-4 w-4" />
+                My Applications
+                {applications.length > 0 && (
+                  <Badge variant="secondary" className="ml-1 bg-accent text-accent-foreground">
+                    {applications.length}
+                  </Badge>
+                )}
+              </TabsTrigger>
+              <TabsTrigger value="certifications" className="gap-2 data-[state=active]:bg-primary data-[state=active]:text-primary-foreground">
+                <GraduationCap className="h-4 w-4" />
+                My Certifications
+                {completedCertifications.length > 0 && (
+                  <Badge variant="secondary" className="ml-1 bg-accent text-accent-foreground">
+                    {completedCertifications.length}
+                  </Badge>
+                )}
+              </TabsTrigger>
+            </TabsList>
+          </div>
 
           <TabsContent value="browse" className="space-y-6">
             {/* Search and Stats */}
-            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-              <div className="flex items-center gap-2">
+            <div className="animate-fade-up animate-stagger-2 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+              <div className="flex items-center gap-3">
                 <SearchBar value={searchQuery} onChange={setSearchQuery} />
                 <Button
                   variant={showFavoritesOnly ? "default" : "outline"}
                   size="icon"
                   onClick={() => setShowFavoritesOnly(!showFavoritesOnly)}
-                  className="shrink-0"
+                  className="shrink-0 h-11 w-11 rounded-xl hover-lift"
                 >
-                  <Heart className={showFavoritesOnly ? "h-4 w-4 fill-current" : "h-4 w-4"} />
+                  <Heart className={showFavoritesOnly ? "h-5 w-5 fill-current" : "h-5 w-5"} />
                 </Button>
               </div>
-              <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                <span>
-                  Showing{" "}
-                  <Badge variant="secondary" className="font-mono">
+              <div className="flex items-center gap-3 text-sm text-muted-foreground">
+                <span className="font-medium">
+                  <Badge variant="outline" className="font-mono text-foreground mr-1">
                     {filteredCertifications.length}
-                  </Badge>{" "}
+                  </Badge>
                   of {mockCertifications.length} certifications
                 </span>
                 {favorites.length > 0 && (
-                  <Badge variant="outline" className="gap-1">
-                    <Heart className="h-3 w-3" />
-                    {favorites.length} favorites
+                  <Badge className="bg-accent/10 text-accent border-accent/20 gap-1">
+                    <Heart className="h-3 w-3 fill-current" />
+                    {favorites.length}
                   </Badge>
                 )}
               </div>
             </div>
 
             {/* Filters */}
-            <FilterBar
-              filters={filters}
-              onFilterChange={handleFilterChange}
-              onClearFilters={handleClearFilters}
-              options={filterOptions}
-            />
+            <div className="animate-fade-up animate-stagger-3">
+              <FilterBar
+                filters={filters}
+                onFilterChange={handleFilterChange}
+                onClearFilters={handleClearFilters}
+                options={filterOptions}
+              />
+            </div>
 
             {/* Table */}
-            <CertificationsTable
-              certifications={filteredCertifications}
-              onToggleFavorite={toggleFavorite}
-              isFavorite={isFavorite}
-              onApplyFunding={setApplyDialogCert}
-              hasApplied={hasApplied}
-              isCompleted={isCompleted}
-            />
+            <div className="animate-fade-up animate-stagger-4">
+              <CertificationsTable
+                certifications={filteredCertifications}
+                onToggleFavorite={toggleFavorite}
+                isFavorite={isFavorite}
+                onApplyFunding={setApplyDialogCert}
+                hasApplied={hasApplied}
+                isCompleted={isCompleted}
+              />
+            </div>
           </TabsContent>
 
-          <TabsContent value="applications">
+          <TabsContent value="applications" className="animate-fade-up">
             <MyApplications applications={applications} />
           </TabsContent>
 
-          <TabsContent value="certifications" className="space-y-4">
+          <TabsContent value="certifications" className="space-y-6 animate-fade-up">
             <div className="flex justify-end">
-              <Button onClick={() => setShowAddCertDialog(true)} className="gap-2">
+              <Button onClick={() => setShowAddCertDialog(true)} className="gap-2 rounded-xl shadow-soft hover-lift">
                 <Plus className="h-4 w-4" />
                 Add Certification
               </Button>

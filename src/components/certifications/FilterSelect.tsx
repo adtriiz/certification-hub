@@ -23,17 +23,17 @@ export const FilterSelect = ({
 }: FilterSelectProps) => {
   return (
     <div className="flex flex-col gap-1.5">
-      <label className="text-xs font-medium text-muted-foreground uppercase tracking-wide">
+      <label className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">
         {label}
       </label>
       <Select value={value} onValueChange={onChange}>
-        <SelectTrigger className="w-[160px] h-9 bg-card border-border text-sm">
+        <SelectTrigger className="w-[160px] h-9 bg-background/60 border-border/60 text-sm rounded-lg hover:border-primary/40 transition-colors">
           <SelectValue placeholder={placeholder} />
         </SelectTrigger>
-        <SelectContent>
-          <SelectItem value="all">{placeholder}</SelectItem>
+        <SelectContent className="rounded-lg border-border/60">
+          <SelectItem value="all" className="rounded-md">{placeholder}</SelectItem>
           {options.map((option) => (
-            <SelectItem key={option} value={option}>
+            <SelectItem key={option} value={option} className="rounded-md">
               {option}
             </SelectItem>
           ))}
