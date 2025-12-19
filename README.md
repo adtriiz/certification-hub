@@ -1,73 +1,68 @@
-# Welcome to your Lovable project
+# Certification Hub
 
-## Project info
+A comprehensive platform for browsing, managing, and tracking professional certifications. This project streamlines the process of finding the right certifications and managing funding requests.
 
-**URL**: https://lovable.dev/projects/5503ac0b-b498-411a-9baf-c6cb50ed95ec
+## Features
 
-## How can I edit this code?
+- **Certification Catalog**: Browse a wide range of certifications with details on domain, technology, level, and price.
+- **Admin Dashboard**: Centralized management for administrators to:
+  - Synchronize certification data from Google Sheets.
+  - Track user enrollment and completion statistics.
+  - Review and approve/reject certification funding applications.
+- **Google Sheets Integration**: Robust sync logic that maps spreadsheet data directly to the Supabase database.
+- **Persistent Settings**: Admin configurations (like Sheet ID and GID) are stored for a seamless experience.
+- **Authentication**: Secure login and role-based access control using Supabase Auth.
 
-There are several ways of editing your application.
+## Tech Stack
 
-**Use Lovable**
+- **Frontend**: React (with Vite), TypeScript, Tailwind CSS.
+- **UI Components**: shadcn/ui (Radix UI primitives).
+- **Backend/Database**: Supabase (Postgres, Auth, Edge Functions).
+- **State Management**: TanStack Query (React Query).
+- **Icons**: Lucide React.
 
-Simply visit the [Lovable Project](https://lovable.dev/projects/5503ac0b-b498-411a-9baf-c6cb50ed95ec) and start prompting.
+## Getting Started
 
-Changes made via Lovable will be committed automatically to this repo.
+### Prerequisites
 
-**Use your preferred IDE**
+- Node.js & npm (or bun) installed.
+- A Supabase project with the required schema.
 
-If you want to work locally using your own IDE, you can clone this repo and push changes. Pushed changes will also be reflected in Lovable.
+### Setup
 
-The only requirement is having Node.js & npm installed - [install with nvm](https://github.com/nvm-sh/nvm#installing-and-updating)
+1. **Clone the repository**:
+   ```sh
+   git clone <YOUR_GIT_URL>
+   cd certification-hub
+   ```
 
-Follow these steps:
+2. **Install dependencies**:
+   ```sh
+   npm install
+   # or
+   bun install
+   ```
 
-```sh
-# Step 1: Clone the repository using the project's Git URL.
-git clone <YOUR_GIT_URL>
+3. **Environment Variables**:
+   Create a `.env` file in the root directory and add your Supabase credentials:
+   ```env
+   VITE_SUPABASE_URL=your_supabase_url
+   VITE_SUPABASE_ANON_KEY=your_supabase_anon_key
+   ```
 
-# Step 2: Navigate to the project directory.
-cd <YOUR_PROJECT_NAME>
+4. **Run the development server**:
+   ```sh
+   npm run dev
+   ```
 
-# Step 3: Install the necessary dependencies.
-npm i
+## Project Structure
 
-# Step 4: Start the development server with auto-reloading and an instant preview.
-npm run dev
-```
+- `src/components`: Reusable UI components and feature-specific logic.
+- `src/pages`: Main application views (Index, AdminDashboard, Login, etc.).
+- `src/integrations/supabase`: Supabase client configuration and types.
+- `src/hooks`: Custom React hooks for data fetching and authentication.
+- `src/types`: TypeScript interfaces and type definitions.
 
-**Edit a file directly in GitHub**
+## License
 
-- Navigate to the desired file(s).
-- Click the "Edit" button (pencil icon) at the top right of the file view.
-- Make your changes and commit the changes.
-
-**Use GitHub Codespaces**
-
-- Navigate to the main page of your repository.
-- Click on the "Code" button (green button) near the top right.
-- Select the "Codespaces" tab.
-- Click on "New codespace" to launch a new Codespace environment.
-- Edit files directly within the Codespace and commit and push your changes once you're done.
-
-## What technologies are used for this project?
-
-This project is built with:
-
-- Vite
-- TypeScript
-- React
-- shadcn-ui
-- Tailwind CSS
-
-## How can I deploy this project?
-
-Simply open [Lovable](https://lovable.dev/projects/5503ac0b-b498-411a-9baf-c6cb50ed95ec) and click on Share -> Publish.
-
-## Can I connect a custom domain to my Lovable project?
-
-Yes, you can!
-
-To connect a domain, navigate to Project > Settings > Domains and click Connect Domain.
-
-Read more here: [Setting up a custom domain](https://docs.lovable.dev/features/custom-domain#custom-domain)
+This project is licensed under the MIT License.
