@@ -3,10 +3,10 @@ import { Button } from "@/components/ui/button";
 import { FilterSelect } from "./FilterSelect";
 
 export interface Filters {
-  area: string;
+  domain: string;
   languageFramework: string;
   provider: string;
-  level: string;
+  experienceLevel: string;
   quality: string;
 }
 
@@ -15,29 +15,29 @@ interface FilterBarProps {
   onFilterChange: (key: keyof Filters, value: string) => void;
   onClearFilters: () => void;
   options: {
-    areas: string[];
+    domains: string[];
     languages: string[];
     providers: string[];
-    levels: string[];
+    experienceLevels: string[];
     qualities: string[];
   };
 }
 
-export const FilterBar = ({ 
-  filters, 
-  onFilterChange, 
+export const FilterBar = ({
+  filters,
+  onFilterChange,
   onClearFilters,
-  options 
+  options
 }: FilterBarProps) => {
   const hasActiveFilters = Object.values(filters).some(v => v !== "all");
 
   return (
     <div className="flex flex-wrap items-end gap-3 p-4 rounded-xl bg-card/60 backdrop-blur-sm border border-border/40">
       <FilterSelect
-        label="Area"
-        value={filters.area}
-        options={options.areas}
-        onChange={(v) => onFilterChange("area", v)}
+        label="Domain"
+        value={filters.domain}
+        options={options.domains}
+        onChange={(v) => onFilterChange("domain", v)}
       />
       <FilterSelect
         label="Language / Framework"
@@ -52,10 +52,10 @@ export const FilterBar = ({
         onChange={(v) => onFilterChange("provider", v)}
       />
       <FilterSelect
-        label="Level"
-        value={filters.level}
-        options={options.levels}
-        onChange={(v) => onFilterChange("level", v)}
+        label="Experience Level"
+        value={filters.experienceLevel}
+        options={options.experienceLevels}
+        onChange={(v) => onFilterChange("experienceLevel", v)}
       />
       <FilterSelect
         label="Quality"

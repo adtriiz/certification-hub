@@ -88,7 +88,7 @@ export const AddCertificationDialog = ({
                       >
                         <p className="font-medium text-sm">{cert.certificationName}</p>
                         <p className="text-xs text-muted-foreground">
-                          {cert.provider} • {cert.level}
+                          {cert.provider.join(", ")} • {cert.experienceLevel}
                         </p>
                       </button>
                     ))
@@ -103,7 +103,7 @@ export const AddCertificationDialog = ({
                 <div className="p-3 rounded-md bg-accent/50 border">
                   <p className="font-medium">{selected.certificationName}</p>
                   <p className="text-sm text-muted-foreground">
-                    {selected.provider} • {selected.level}
+                    {selected.provider.join(", ")} • {selected.experienceLevel}
                   </p>
                 </div>
                 <Button

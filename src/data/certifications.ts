@@ -1,259 +1,43 @@
 export interface Certification {
   id: string;
   certificationName: string;
-  area: string;
-  languageFramework: string;
+  domain: string;
+  languageFramework: string[];
   url: string;
-  provider: string;
+  provider: string[];
   price: number;
   currency: string;
-  level: string;
+  experienceLevel: string;
   certificateQuality: string;
   lastChecked: string;
   notes: string;
   priceInEUR: number;
 }
 
-export const mockCertifications: Certification[] = [
-  {
-    id: "1",
-    certificationName: "AWS Certified Solutions Architect",
-    area: "Cloud",
-    languageFramework: "AWS",
-    url: "https://aws.amazon.com/certification/",
-    provider: "Amazon",
-    price: 300,
-    currency: "USD",
-    level: "Professional",
-    certificateQuality: "High",
-    lastChecked: "2024-11-15",
-    notes: "Most recognized cloud certification",
-    priceInEUR: 275,
-  },
-  {
-    id: "2",
-    certificationName: "Google Cloud Professional Architect",
-    area: "Cloud",
-    languageFramework: "GCP",
-    url: "https://cloud.google.com/certification",
-    provider: "Google",
-    price: 200,
-    currency: "USD",
-    level: "Professional",
-    certificateQuality: "High",
-    lastChecked: "2024-10-20",
-    notes: "Growing in popularity",
-    priceInEUR: 183,
-  },
-  {
-    id: "3",
-    certificationName: "Microsoft Azure Administrator",
-    area: "Cloud",
-    languageFramework: "Azure",
-    url: "https://learn.microsoft.com/certifications/",
-    provider: "Microsoft",
-    price: 165,
-    currency: "USD",
-    level: "Associate",
-    certificateQuality: "High",
-    lastChecked: "2024-11-01",
-    notes: "Good for enterprise environments",
-    priceInEUR: 151,
-  },
-  {
-    id: "4",
-    certificationName: "Certified Kubernetes Administrator",
-    area: "DevOps",
-    languageFramework: "Kubernetes",
-    url: "https://training.linuxfoundation.org/certification/",
-    provider: "Linux Foundation",
-    price: 395,
-    currency: "USD",
-    level: "Professional",
-    certificateQuality: "High",
-    lastChecked: "2024-09-30",
-    notes: "Hands-on practical exam",
-    priceInEUR: 362,
-  },
-  {
-    id: "5",
-    certificationName: "React Developer Certification",
-    area: "Frontend",
-    languageFramework: "React",
-    url: "https://reactcertification.example.com",
-    provider: "Meta",
-    price: 150,
-    currency: "USD",
-    level: "Intermediate",
-    certificateQuality: "Medium",
-    lastChecked: "2024-08-15",
-    notes: "Good for frontend developers",
-    priceInEUR: 137,
-  },
-  {
-    id: "6",
-    certificationName: "Python Institute PCAP",
-    area: "Programming",
-    languageFramework: "Python",
-    url: "https://pythoninstitute.org/pcap",
-    provider: "Python Institute",
-    price: 295,
-    currency: "USD",
-    level: "Associate",
-    certificateQuality: "Medium",
-    lastChecked: "2024-10-05",
-    notes: "Certified Associate in Python Programming",
-    priceInEUR: 270,
-  },
-  {
-    id: "7",
-    certificationName: "Oracle Java SE 17 Developer",
-    area: "Programming",
-    languageFramework: "Java",
-    url: "https://education.oracle.com/",
-    provider: "Oracle",
-    price: 245,
-    currency: "USD",
-    level: "Professional",
-    certificateQuality: "High",
-    lastChecked: "2024-11-10",
-    notes: "Industry standard Java certification",
-    priceInEUR: 224,
-  },
-  {
-    id: "8",
-    certificationName: "Terraform Associate",
-    area: "DevOps",
-    languageFramework: "Terraform",
-    url: "https://www.hashicorp.com/certification/",
-    provider: "HashiCorp",
-    price: 70,
-    currency: "USD",
-    level: "Associate",
-    certificateQuality: "Medium",
-    lastChecked: "2024-09-20",
-    notes: "Infrastructure as Code certification",
-    priceInEUR: 64,
-  },
-  {
-    id: "9",
-    certificationName: "Certified Scrum Master",
-    area: "Project Management",
-    languageFramework: "Agile",
-    url: "https://www.scrumalliance.org/",
-    provider: "Scrum Alliance",
-    price: 495,
-    currency: "USD",
-    level: "Foundation",
-    certificateQuality: "High",
-    lastChecked: "2024-10-25",
-    notes: "Requires attending training course",
-    priceInEUR: 453,
-  },
-  {
-    id: "10",
-    certificationName: "CompTIA Security+",
-    area: "Security",
-    languageFramework: "Security",
-    url: "https://www.comptia.org/certifications/security",
-    provider: "CompTIA",
-    price: 392,
-    currency: "USD",
-    level: "Foundation",
-    certificateQuality: "High",
-    lastChecked: "2024-11-05",
-    notes: "Entry-level security certification",
-    priceInEUR: 359,
-  },
-  {
-    id: "11",
-    certificationName: "CISSP",
-    area: "Security",
-    languageFramework: "Security",
-    url: "https://www.isc2.org/Certifications/CISSP",
-    provider: "ISC2",
-    price: 749,
-    currency: "USD",
-    level: "Expert",
-    certificateQuality: "High",
-    lastChecked: "2024-10-15",
-    notes: "5 years experience required",
-    priceInEUR: 686,
-  },
-  {
-    id: "12",
-    certificationName: "Node.js Application Developer",
-    area: "Backend",
-    languageFramework: "Node.js",
-    url: "https://training.linuxfoundation.org/",
-    provider: "OpenJS Foundation",
-    price: 375,
-    currency: "USD",
-    level: "Professional",
-    certificateQuality: "Medium",
-    lastChecked: "2024-09-10",
-    notes: "Practical hands-on exam",
-    priceInEUR: 343,
-  },
-  {
-    id: "13",
-    certificationName: "Docker Certified Associate",
-    area: "DevOps",
-    languageFramework: "Docker",
-    url: "https://training.mirantis.com/",
-    provider: "Mirantis",
-    price: 195,
-    currency: "USD",
-    level: "Associate",
-    certificateQuality: "Medium",
-    lastChecked: "2024-08-28",
-    notes: "Container fundamentals",
-    priceInEUR: 179,
-  },
-  {
-    id: "14",
-    certificationName: "MongoDB Developer Associate",
-    area: "Database",
-    languageFramework: "MongoDB",
-    url: "https://university.mongodb.com/",
-    provider: "MongoDB",
-    price: 150,
-    currency: "USD",
-    level: "Associate",
-    certificateQuality: "Medium",
-    lastChecked: "2024-10-30",
-    notes: "NoSQL database certification",
-    priceInEUR: 137,
-  },
-  {
-    id: "15",
-    certificationName: "PostgreSQL Professional",
-    area: "Database",
-    languageFramework: "PostgreSQL",
-    url: "https://www.enterprisedb.com/",
-    provider: "EDB",
-    price: 200,
-    currency: "USD",
-    level: "Professional",
-    certificateQuality: "Medium",
-    lastChecked: "2024-09-15",
-    notes: "Relational database expertise",
-    priceInEUR: 183,
-  },
-];
+export const mockCertifications: Certification[] = [];
 
 // Helper functions to get unique filter values
-export const getUniqueAreas = (certs: Certification[]) => 
-  [...new Set(certs.map(c => c.area))].sort();
+export const getUniqueDomains = (certs: Certification[]) =>
+  [...new Set(certs.map(c => c.domain).filter(Boolean))].sort();
 
-export const getUniqueLanguages = (certs: Certification[]) => 
-  [...new Set(certs.map(c => c.languageFramework))].sort();
+export const getUniqueLanguages = (certs: Certification[]) =>
+  [...new Set(certs.flatMap(c => c.languageFramework).filter(Boolean))].sort();
 
-export const getUniqueProviders = (certs: Certification[]) => 
-  [...new Set(certs.map(c => c.provider))].sort();
+export const getUniqueProviders = (certs: Certification[]) =>
+  [...new Set(certs.flatMap(c => c.provider).filter(Boolean))].sort();
 
-export const getUniqueLevels = (certs: Certification[]) => 
-  [...new Set(certs.map(c => c.level))].sort();
+export const getUniqueExperienceLevels = (certs: Certification[]) => {
+  const levelOrder = ["entry-level", "intermediate", "advanced", "expert"];
+  return [...new Set(certs.map(c => c.experienceLevel).filter(Boolean))].sort((a, b) => {
+    const indexA = levelOrder.indexOf(a.toLowerCase());
+    const indexB = levelOrder.indexOf(b.toLowerCase());
+    // Put known levels in order, unknowns at the end
+    if (indexA === -1 && indexB === -1) return a.localeCompare(b);
+    if (indexA === -1) return 1;
+    if (indexB === -1) return -1;
+    return indexA - indexB;
+  });
+};
 
-export const getUniqueQualities = (certs: Certification[]) => 
-  [...new Set(certs.map(c => c.certificateQuality))].sort();
+export const getUniqueQualities = (certs: Certification[]) =>
+  [...new Set(certs.map(c => c.certificateQuality).filter(Boolean))].sort();

@@ -17,6 +17,8 @@ import {
   TooltipContent,
   TooltipTrigger,
 } from "@/components/ui/tooltip";
+import { LevelMeter } from "@/components/ui/level-meter";
+import { QualitySeal } from "@/components/ui/quality-seal";
 
 interface CertificationsTableProps {
   certifications: Certification[];
@@ -30,56 +32,7 @@ interface CertificationsTableProps {
 type SortKey = keyof Certification;
 type SortDirection = "asc" | "desc" | null;
 
-const getLevelIndex = (level: string): number => {
-  const levels = ["foundation", "associate", "intermediate", "professional", "expert"];
-  return levels.indexOf(level.toLowerCase());
-};
 
-const LevelMeter = ({ level }: { level: string }) => {
-  const index = getLevelIndex(level);
-  const segments = 5;
-  
-  return (
-    <div className="flex items-center gap-1">
-      <div className="flex gap-0.5">
-        {Array.from({ length: segments }).map((_, i) => (
-          <div
-            key={i}
-            className={`h-3 w-1.5 rounded-sm transition-colors ${
-              i <= index 
-                ? "bg-primary" 
-                : "bg-border"
-            }`}
-          />
-        ))}
-      </div>
-      <span className="ml-1.5 text-xs text-muted-foreground capitalize">{level}</span>
-    </div>
-  );
-};
-
-const QualitySeal = ({ quality }: { quality: string }) => {
-  const getConfig = () => {
-    switch (quality.toLowerCase()) {
-      case "high":
-        return { color: "text-success", bg: "bg-success/10", ring: "ring-success/20", label: "★★★" };
-      case "medium":
-        return { color: "text-warning", bg: "bg-warning/10", ring: "ring-warning/20", label: "★★" };
-      case "low":
-        return { color: "text-muted-foreground", bg: "bg-muted", ring: "ring-border", label: "★" };
-      default:
-        return { color: "text-muted-foreground", bg: "bg-muted", ring: "ring-border", label: "–" };
-    }
-  };
-  
-  const config = getConfig();
-  
-  return (
-    <div className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full ${config.bg} ring-1 ${config.ring}`}>
-      <span className={`text-xs font-medium ${config.color}`}>{config.label}</span>
-    </div>
-  );
-};
 
 export const CertificationsTable = ({
   certifications,
@@ -108,20 +61,20 @@ export const CertificationsTable = ({
 
   const sortedCertifications = [...certifications].sort((a, b) => {
     if (!sortKey || !sortDirection) return 0;
-    
+
     const aVal = a[sortKey];
     const bVal = b[sortKey];
-    
+
     if (typeof aVal === "string" && typeof bVal === "string") {
-      return sortDirection === "asc" 
+      return sortDirection === "asc"
         ? aVal.localeCompare(bVal)
         : bVal.localeCompare(aVal);
     }
-    
+
     if (typeof aVal === "number" && typeof bVal === "number") {
       return sortDirection === "asc" ? aVal - bVal : bVal - aVal;
     }
-    
+
     return 0;
   });
 
@@ -129,7 +82,7 @@ export const CertificationsTable = ({
     if (sortKey !== columnKey) {
       return <ArrowUpDown className="ml-1 h-3 w-3 opacity-40" />;
     }
-    return sortDirection === "asc" 
+    return sortDirection === "asc"
       ? <ArrowUp className="ml-1 h-3 w-3 text-primary" />
       : <ArrowDown className="ml-1 h-3 w-3 text-primary" />;
   };
@@ -157,7 +110,7 @@ export const CertificationsTable = ({
                 <SortableHeader columnKey="certificationName">Name</SortableHeader>
               </TableHead>
               <TableHead className="min-w-[100px]">
-                <SortableHeader columnKey="area">Area</SortableHeader>
+                <SortableHeader columnKey="domain">Domain</SortableHeader>
               </TableHead>
               <TableHead className="min-w-[120px]">
                 <SortableHeader columnKey="languageFramework">Language</SortableHeader>
@@ -166,7 +119,7 @@ export const CertificationsTable = ({
                 <SortableHeader columnKey="provider">Provider</SortableHeader>
               </TableHead>
               <TableHead className="min-w-[100px]">
-                <SortableHeader columnKey="level">Level</SortableHeader>
+                <SortableHeader columnKey="experienceLevel">Experience Level</SortableHeader>
               </TableHead>
               <TableHead className="min-w-[80px]">
                 <SortableHeader columnKey="certificateQuality">Quality</SortableHeader>
@@ -192,8 +145,8 @@ export const CertificationsTable = ({
                 const applied = hasApplied?.(cert.id);
                 const completed = isCompleted?.(cert.id);
                 return (
-                  <TableRow 
-                    key={cert.id} 
+                  <TableRow
+                    key={cert.id}
                     className="hover:bg-table-row-hover transition-colors border-b border-border/40"
                     style={{ animationDelay: `${index * 0.02}s` }}
                   >
@@ -220,13 +173,13 @@ export const CertificationsTable = ({
                     </TableCell>
                     <TableCell>
                       <Badge variant="outline" className="font-normal border-border/60">
-                        {cert.area}
+                        {cert.domain}
                       </Badge>
                     </TableCell>
-                    <TableCell className="text-muted-foreground">{cert.languageFramework}</TableCell>
-                    <TableCell className="text-muted-foreground">{cert.provider}</TableCell>
+                    <TableCell className="text-muted-foreground">{cert.languageFramework.join(", ")}</TableCell>
+                    <TableCell className="text-muted-foreground">{cert.provider.join(", ")}</TableCell>
                     <TableCell>
-                      <LevelMeter level={cert.level} />
+                      <LevelMeter level={cert.experienceLevel} />
                     </TableCell>
                     <TableCell>
                       <QualitySeal quality={cert.certificateQuality} />

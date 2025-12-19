@@ -61,7 +61,7 @@ export const ApplyFundingDialog = ({
           <div className="flex gap-6 text-sm">
             <div>
               <span className="text-muted-foreground">Provider:</span>{" "}
-              <span className="font-medium">{certification.provider}</span>
+              <span className="font-medium">{certification.provider.join(", ")}</span>
             </div>
             <div>
               <span className="text-muted-foreground">Cost:</span>{" "}

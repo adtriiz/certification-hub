@@ -5,10 +5,10 @@ import { cn } from "@/lib/utils";
 interface FavoriteButtonProps {
   isFavorite: boolean;
   onToggle: () => void;
-  size?: "sm" | "default";
+
 }
 
-export const FavoriteButton = ({ isFavorite, onToggle, size = "sm" }: FavoriteButtonProps) => {
+export const FavoriteButton = ({ isFavorite, onToggle }: FavoriteButtonProps) => {
   return (
     <Button
       variant="ghost"
