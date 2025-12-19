@@ -1,6 +1,6 @@
 # Certification Hub
 
-A comprehensive platform for browsing, managing, and tracking professional certifications. This project streamlines the process of finding the right certifications and managing funding requests.
+A comprehensive platform for browsing, managing, and tracking professional certifications. This project streamlines the process of finding the right certifications and managing funding requests for small teams.
 
 ## Features
 
