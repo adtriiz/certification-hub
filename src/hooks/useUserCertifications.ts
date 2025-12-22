@@ -43,8 +43,8 @@ export const useUserCertifications = () => {
         certificationName: app.certifications?.certification_name || "Unknown",
         status: app.status as "pending" | "approved" | "rejected",
         appliedAt: app.created_at,
-        reason: "Funding Requested", // Not stored in DB currently or needs schema update? Assume simplified.
-        estimatedCost: 0 // Not stored
+        reason: app.reason || "Funding Requested",
+        estimatedCost: Number(app.estimated_cost) || 0
       }));
     },
     enabled: !!user
@@ -110,7 +110,9 @@ export const useUserCertifications = () => {
         .insert({
           user_id: user.id,
           certification_id: params.certId,
-          status: 'pending'
+          status: 'pending',
+          reason: params.reason,
+          estimated_cost: params.cost
         });
       if (error) throw error;
     },

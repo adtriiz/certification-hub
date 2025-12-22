@@ -43,6 +43,8 @@ create table public.applications (
   user_id uuid references public.profiles(id) on delete cascade not null,
   certification_id uuid references public.certifications(id) on delete cascade not null,
   status text not null default 'pending' check (status in ('pending', 'approved', 'rejected')),
+  reason text,
+  estimated_cost numeric,
   created_at timestamp with time zone default timezone('utc'::text, now()) not null,
   updated_at timestamp with time zone default timezone('utc'::text, now()) not null
 );
