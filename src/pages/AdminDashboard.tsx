@@ -293,7 +293,7 @@ const AdminDashboard = () => {
     return (
         <div className="container mx-auto p-6 space-y-8">
             <div className="flex items-center gap-4">
-                <Button variant="ghost" size="icon" onClick={() => navigate("/")} className="shrink-0">
+                <Button variant="ghost" size="icon" onClick={() => navigate("/home")} className="shrink-0">
                     <ArrowLeft className="h-5 w-5" />
                 </Button>
                 <h1 className="text-3xl font-bold">Admin Dashboard</h1>

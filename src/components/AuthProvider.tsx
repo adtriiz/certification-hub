@@ -105,7 +105,13 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     };
 
     const signOut = async () => {
-        await supabase.auth.signOut();
+        const { error } = await supabase.auth.signOut({ scope: 'local' });
+        if (error) {
+            console.error('Sign out error:', error.message, error.status);
+        } else {
+            // Redirect to login page after successful sign out
+            window.location.hash = '/';
+        }
     };
 
     return (
