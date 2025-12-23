@@ -11,7 +11,7 @@ import { toast } from "sonner";
 import { RefreshCw, Check, X, ShieldAlert, ArrowLeft, Loader2 } from "lucide-react";
 
 const AdminDashboard = () => {
-    const { session, isAdmin, loading: authLoading } = useAuth();
+    const { session, isAdmin, loading: authLoading, adminLoading } = useAuth();
     const navigate = useNavigate();
     const [sheetId, setSheetId] = useState("");
     const [sheetName, setSheetName] = useState("");
@@ -21,11 +21,11 @@ const AdminDashboard = () => {
     const [applications, setApplications] = useState<any[]>([]);
 
     useEffect(() => {
-        if (!authLoading && !isAdmin) {
+        if (!authLoading && !adminLoading && !isAdmin) {
             toast.error("Unauthorized access");
             navigate("/");
         }
-    }, [authLoading, isAdmin, navigate]);
+    }, [authLoading, adminLoading, isAdmin, navigate]);
 
     useEffect(() => {
         if (isAdmin) {
