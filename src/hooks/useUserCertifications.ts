@@ -17,9 +17,13 @@ export const useUserCertifications = () => {
         .select(`
           *,
           certifications (certification_name)
-        `);
+        `)
+        .eq('user_id', user.id);
+
       if (error) throw error;
-      return data;
+
+      // Defensive JS-level filtering as fallback
+      return (data || []).filter((item: any) => item.user_id === user.id);
     },
     enabled: !!user
   });
@@ -33,11 +37,15 @@ export const useUserCertifications = () => {
         .select(`
           *,
           certifications (certification_name)
-        `);
+        `)
+        .eq('user_id', user.id);
 
       if (error) throw error;
 
-      return data.map(app => ({
+      // Defensive JS-level filtering as fallback
+      const filteredData = (data || []).filter((item: any) => item.user_id === user.id);
+
+      return filteredData.map(app => ({
         id: app.id,
         certificationId: app.certification_id,
         certificationName: app.certifications?.certification_name || "Unknown",

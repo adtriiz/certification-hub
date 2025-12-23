@@ -6,6 +6,7 @@ interface AuthContextType {
     user: User | null;
     session: Session | null;
     loading: boolean;
+    adminLoading: boolean;
     isAdmin: boolean;
     signInWithGoogle: () => Promise<void>;
     linkGoogleSheets: () => Promise<void>;
@@ -16,6 +17,7 @@ const AuthContext = createContext<AuthContextType>({
     user: null,
     session: null,
     loading: true,
+    adminLoading: false,
     isAdmin: false,
     signInWithGoogle: async () => { },
     linkGoogleSheets: async () => { },
@@ -29,6 +31,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     const [session, setSession] = useState<Session | null>(null);
     const [loading, setLoading] = useState(true);
     const [isAdmin, setIsAdmin] = useState(false);
+    const [adminLoading, setAdminLoading] = useState(false);
 
     useEffect(() => {
         // Check active sessions and sets the user
@@ -60,16 +63,21 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     }, []);
 
     const checkAdminRole = async (userId: string) => {
-        const { data } = await supabase
-            .from('profiles')
-            .select('role')
-            .eq('id', userId)
-            .single();
+        setAdminLoading(true);
+        try {
+            const { data } = await supabase
+                .from('profiles')
+                .select('role')
+                .eq('id', userId)
+                .single();
 
-        if (data && data.role === 'admin') {
-            setIsAdmin(true);
-        } else {
-            setIsAdmin(false);
+            if (data && data.role === 'admin') {
+                setIsAdmin(true);
+            } else {
+                setIsAdmin(false);
+            }
+        } finally {
+            setAdminLoading(false);
         }
     };
 
@@ -97,11 +105,17 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     };
 
     const signOut = async () => {
-        await supabase.auth.signOut();
+        const { error } = await supabase.auth.signOut({ scope: 'local' });
+        if (error) {
+            console.error('Sign out error:', error.message, error.status);
+        } else {
+            // Redirect to login page after successful sign out
+            window.location.hash = '/';
+        }
     };
 
     return (
-        <AuthContext.Provider value={{ user, session, loading, isAdmin, signInWithGoogle, linkGoogleSheets, signOut }}>
+        <AuthContext.Provider value={{ user, session, loading, adminLoading, isAdmin, signInWithGoogle, linkGoogleSheets, signOut }}>
             {children}
         </AuthContext.Provider>
     );

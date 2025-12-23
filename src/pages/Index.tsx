@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { Link } from "react-router-dom";
-import { Award, FileText, GraduationCap, Plus, Sparkles, LogIn, LogOut, LayoutDashboard, Loader2 } from "lucide-react";
+import { Award, FileText, GraduationCap, Plus, Sparkles, LogOut, LayoutDashboard, Loader2 } from "lucide-react";
 import { MyApplications } from "@/components/certifications/MyApplications";
 import { MyCertifications } from "@/components/certifications/MyCertifications";
 import { ApplyFundingDialog } from "@/components/certifications/ApplyFundingDialog";
@@ -107,26 +107,16 @@ const Index = () => {
               </div>
             </div>
             <div className="flex gap-2">
-              {!user ? (
-                <Link to="/login">
-                  <Button variant="outline" className="gap-2">
-                    <LogIn className="h-4 w-4" /> Sign In
+              {isAdmin && (
+                <Link to="/admin">
+                  <Button variant="ghost" className="gap-2">
+                    <LayoutDashboard className="h-4 w-4" /> Admin
                   </Button>
                 </Link>
-              ) : (
-                <>
-                  {isAdmin && (
-                    <Link to="/admin">
-                      <Button variant="ghost" className="gap-2">
-                        <LayoutDashboard className="h-4 w-4" /> Admin
-                      </Button>
-                    </Link>
-                  )}
-                  <Button variant="ghost" onClick={() => signOut()} className="gap-2">
-                    <LogOut className="h-4 w-4" /> Sign Out
-                  </Button>
-                </>
               )}
+              <Button variant="ghost" onClick={() => signOut()} className="gap-2">
+                <LogOut className="h-4 w-4" /> Sign Out
+              </Button>
             </div>
           </div>
         </div>
