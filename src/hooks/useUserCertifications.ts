@@ -8,6 +8,7 @@ export const useUserCertifications = () => {
   const { user } = useAuth();
   const queryClient = useQueryClient();
 
+  // Query for internal certifications
   const { data: userCerts = [] } = useQuery({
     queryKey: ["user_certifications", user?.id],
     queryFn: async () => {
@@ -16,13 +17,30 @@ export const useUserCertifications = () => {
         .from('user_certifications')
         .select(`
           *,
-          certifications (certification_name)
+          certifications (certification_name, provider)
         `)
         .eq('user_id', user.id);
 
       if (error) throw error;
 
       // Defensive JS-level filtering as fallback
+      return (data || []).filter((item: any) => item.user_id === user.id);
+    },
+    enabled: !!user
+  });
+
+  // Query for external certifications
+  const { data: externalCerts = [] } = useQuery({
+    queryKey: ["external_certifications", user?.id],
+    queryFn: async () => {
+      if (!user) return [];
+      const { data, error } = await supabase
+        .from('external_certifications')
+        .select('*')
+        .eq('user_id', user.id);
+
+      if (error) throw error;
+
       return (data || []).filter((item: any) => item.user_id === user.id);
     },
     enabled: !!user
@@ -63,16 +81,37 @@ export const useUserCertifications = () => {
     .filter((c) => c.status === 'saved')
     .map((c) => c.certification_id);
 
-  const completedCertifications: CompletedCertification[] = userCerts
+  // Combine internal and external certifications
+  const internalCompleted: CompletedCertification[] = userCerts
     .filter((c) => c.status === 'completed')
     .map((c) => ({
       id: c.id,
       certificationId: c.certification_id,
       certificationName: c.certifications?.certification_name || "Unknown",
-      completedAt: c.updated_at,
-      expiresAt: undefined
+      completedAt: c.completed_at || c.updated_at,
+      credentialUrl: c.credential_url,
+      provider: Array.isArray(c.certifications?.provider)
+        ? c.certifications.provider.join(", ")
+        : c.certifications?.provider,
+      isExternal: false,
+      expiresAt: c.expires_at
     }));
 
+  const externalCompleted: CompletedCertification[] = externalCerts.map((c: any) => ({
+    id: c.id,
+    certificationId: c.id, // Use same id as certificationId for external
+    certificationName: c.certification_name,
+    completedAt: c.completed_at,
+    credentialUrl: c.credential_url,
+    provider: c.provider,
+    isExternal: true,
+    expiresAt: c.expires_at
+  }));
+
+  const completedCertifications: CompletedCertification[] = [
+    ...internalCompleted,
+    ...externalCompleted
+  ];
 
   // Mutations
   const toggleFavoriteMutation = useMutation({
@@ -81,8 +120,6 @@ export const useUserCertifications = () => {
 
       const isFav = favorites.includes(certificationId);
       if (isFav) {
-        // Delete
-        // We need to find the record ID or delete by matches
         const { error } = await supabase
           .from('user_certifications')
           .delete()
@@ -91,7 +128,6 @@ export const useUserCertifications = () => {
           .eq('status', 'saved');
         if (error) throw error;
       } else {
-        // Insert
         const { error } = await supabase
           .from('user_certifications')
           .insert({
@@ -130,14 +166,23 @@ export const useUserCertifications = () => {
   });
 
   const completeMutation = useMutation({
-    mutationFn: async (params: { certId: string, certName: string, expiresAt?: string }) => {
+    mutationFn: async (params: {
+      certId: string,
+      certName: string,
+      completedAt: string,
+      credentialUrl?: string,
+      expiresAt?: string
+    }) => {
       if (!user) throw new Error("Must be logged in");
       const { error } = await supabase
         .from('user_certifications')
         .insert({
           user_id: user.id,
           certification_id: params.certId,
-          status: 'completed'
+          status: 'completed',
+          completed_at: params.completedAt,
+          credential_url: params.credentialUrl || null,
+          expires_at: params.expiresAt || null
         });
       if (error) throw error;
     },
@@ -146,13 +191,45 @@ export const useUserCertifications = () => {
     }
   });
 
-  const removeCompleteMutation = useMutation({
-    mutationFn: async (completedCertId: string) => { // This relies on the record ID
-      const { error } = await supabase.from('user_certifications').delete().eq('id', completedCertId);
+  const externalCertMutation = useMutation({
+    mutationFn: async (params: {
+      certName: string,
+      provider: string,
+      completedAt: string,
+      credentialUrl?: string,
+      expiresAt?: string
+    }) => {
+      if (!user) throw new Error("Must be logged in");
+      const { error } = await supabase
+        .from('external_certifications')
+        .insert({
+          user_id: user.id,
+          certification_name: params.certName,
+          provider: params.provider,
+          completed_at: params.completedAt,
+          credential_url: params.credentialUrl || null,
+          expires_at: params.expiresAt || null
+        });
       if (error) throw error;
     },
     onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["external_certifications"] });
+    }
+  });
+
+  const removeCompleteMutation = useMutation({
+    mutationFn: async ({ id, isExternal }: { id: string, isExternal: boolean }) => {
+      if (isExternal) {
+        const { error } = await supabase.from('external_certifications').delete().eq('id', id);
+        if (error) throw error;
+      } else {
+        const { error } = await supabase.from('user_certifications').delete().eq('id', id);
+        if (error) throw error;
+      }
+    },
+    onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["user_certifications"] });
+      queryClient.invalidateQueries({ queryKey: ["external_certifications"] });
     }
   });
 
@@ -165,10 +242,34 @@ export const useUserCertifications = () => {
     applyForFunding: (certificationId: string, certificationName: string, reason: string, estimatedCost: number) =>
       applyMutation.mutate({ certId: certificationId, certName: certificationName, reason, cost: estimatedCost }),
     hasApplied: (id: string) => applications.some(a => a.certificationId === id),
-    addCompletedCertification: (certificationId: string, certificationName: string, expiresAt?: string) =>
-      completeMutation.mutate({ certId: certificationId, certName: certificationName, expiresAt }),
-    uploadProof: () => console.log("Upload proof not implemented in basic version"),
-    removeCompletedCertification: (id: string) => removeCompleteMutation.mutate(id),
+    addCompletedCertification: (
+      certificationId: string,
+      certificationName: string,
+      completedAt: string,
+      credentialUrl?: string,
+      expiresAt?: string
+    ) => completeMutation.mutate({
+      certId: certificationId,
+      certName: certificationName,
+      completedAt,
+      credentialUrl,
+      expiresAt
+    }),
+    addExternalCertification: (
+      certName: string,
+      provider: string,
+      completedAt: string,
+      credentialUrl?: string,
+      expiresAt?: string
+    ) => externalCertMutation.mutate({
+      certName,
+      provider,
+      completedAt,
+      credentialUrl,
+      expiresAt
+    }),
+    removeCompletedCertification: (id: string, isExternal: boolean) =>
+      removeCompleteMutation.mutate({ id, isExternal }),
     isCompleted: (id: string) => completedCertifications.some(c => c.certificationId === id),
   };
 };
