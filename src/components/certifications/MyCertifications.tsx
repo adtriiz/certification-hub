@@ -1,5 +1,4 @@
-import { useState, useRef } from "react";
-import { Award, Upload, CheckCircle2, Calendar, Trash2 } from "lucide-react";
+import { Award, Calendar, Trash2, ExternalLink, Building2 } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -18,31 +17,13 @@ import {
 
 interface MyCertificationsProps {
   certifications: CompletedCertification[];
-  onUploadProof: (certId: string, fileName: string) => void;
-  onRemove: (certId: string) => void;
+  onRemove: (certId: string, isExternal: boolean) => void;
 }
 
 export const MyCertifications = ({
   certifications,
-  onUploadProof,
   onRemove,
 }: MyCertificationsProps) => {
-  const fileInputRef = useRef<HTMLInputElement>(null);
-  const [uploadingFor, setUploadingFor] = useState<string | null>(null);
-
-  const handleFileSelect = (certId: string) => {
-    setUploadingFor(certId);
-    fileInputRef.current?.click();
-  };
-
-  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (file && uploadingFor) {
-      onUploadProof(uploadingFor, file.name);
-      setUploadingFor(null);
-    }
-    e.target.value = "";
-  };
 
   if (certifications.length === 0) {
     return (
@@ -57,20 +38,26 @@ export const MyCertifications = ({
   }
 
   return (
-    <>
-      <input
-        type="file"
-        ref={fileInputRef}
-        onChange={handleFileChange}
-        accept=".pdf,.png,.jpg,.jpeg"
-        className="hidden"
-      />
-      <div className="grid gap-4 sm:grid-cols-2">
-        {certifications.map((cert) => (
-          <Card key={cert.id}>
-            <CardHeader className="pb-3">
-              <div className="flex items-start justify-between">
+    <div className="grid gap-4 sm:grid-cols-2">
+      {certifications.map((cert) => (
+        <Card key={cert.id}>
+          <CardHeader className="pb-3">
+            <div className="flex items-start justify-between">
+              <div className="space-y-1">
                 <CardTitle className="text-base">{cert.certificationName}</CardTitle>
+                {cert.provider && (
+                  <div className="flex items-center gap-1 text-sm text-muted-foreground">
+                    <Building2 className="h-3 w-3" />
+                    {cert.provider}
+                  </div>
+                )}
+              </div>
+              <div className="flex items-center gap-1">
+                {cert.isExternal && (
+                  <Badge variant="secondary" className="text-xs">
+                    External
+                  </Badge>
+                )}
                 <AlertDialog>
                   <AlertDialogTrigger asChild>
                     <Button variant="ghost" size="icon" className="h-8 w-8 text-muted-foreground hover:text-destructive">
@@ -86,47 +73,42 @@ export const MyCertifications = ({
                     </AlertDialogHeader>
                     <AlertDialogFooter>
                       <AlertDialogCancel>Cancel</AlertDialogCancel>
-                      <AlertDialogAction onClick={() => onRemove(cert.id)}>
+                      <AlertDialogAction onClick={() => onRemove(cert.id, cert.isExternal)}>
                         Remove
                       </AlertDialogAction>
                     </AlertDialogFooter>
                   </AlertDialogContent>
                 </AlertDialog>
               </div>
-            </CardHeader>
-            <CardContent className="space-y-3">
-              <div className="flex items-center gap-4 text-sm">
-                <div className="flex items-center gap-1 text-muted-foreground">
-                  <Calendar className="h-3 w-3" />
-                  Completed: {new Date(cert.completedAt).toLocaleDateString()}
-                </div>
-                {cert.expiresAt && (
-                  <div className="text-muted-foreground">
-                    Expires: {new Date(cert.expiresAt).toLocaleDateString()}
-                  </div>
-                )}
+            </div>
+          </CardHeader>
+          <CardContent className="space-y-3">
+            <div className="flex flex-wrap items-center gap-x-4 gap-y-1 text-sm">
+              <div className="flex items-center gap-1 text-muted-foreground">
+                <Calendar className="h-3 w-3" />
+                Completed: {new Date(cert.completedAt).toLocaleDateString()}
               </div>
-
-              {cert.proofFileName ? (
-                <Badge variant="outline" className="bg-success/10 text-success border-success/20">
-                  <CheckCircle2 className="h-3 w-3 mr-1" />
-                  Proof: {cert.proofFileName}
-                </Badge>
-              ) : (
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={() => handleFileSelect(cert.id)}
-                  className="gap-2"
-                >
-                  <Upload className="h-3 w-3" />
-                  Upload Proof
-                </Button>
+              {cert.expiresAt && (
+                <div className="text-muted-foreground">
+                  Expires: {new Date(cert.expiresAt).toLocaleDateString()}
+                </div>
               )}
-            </CardContent>
-          </Card>
-        ))}
-      </div>
-    </>
+            </div>
+
+            {cert.credentialUrl && (
+              <a
+                href={cert.credentialUrl}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="inline-flex items-center gap-1.5 text-sm text-primary hover:underline"
+              >
+                <ExternalLink className="h-3 w-3" />
+                View Credential
+              </a>
+            )}
+          </CardContent>
+        </Card>
+      ))}
+    </div>
   );
 };

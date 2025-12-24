@@ -13,8 +13,9 @@ export interface CompletedCertification {
   certificationId: string;
   certificationName: string;
   completedAt: string;
-  proofFileName?: string;
-  proofUploadedAt?: string;
+  credentialUrl?: string;
+  provider?: string;
+  isExternal: boolean;
   expiresAt?: string;
 }
 

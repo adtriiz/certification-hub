@@ -34,7 +34,7 @@ const Index = () => {
     applyForFunding,
     hasApplied,
     addCompletedCertification,
-    uploadProof,
+    addExternalCertification,
     removeCompletedCertification,
     isCompleted,
   } = useUserCertifications();
@@ -67,19 +67,31 @@ const Index = () => {
     });
   };
 
-  const handleAddCertification = (certId: string, certName: string, expiresAt?: string) => {
-    addCompletedCertification(certId, certName, expiresAt);
+  const handleAddCertification = (
+    certId: string,
+    certName: string,
+    completedAt: string,
+    credentialUrl?: string,
+    expiresAt?: string
+  ) => {
+    addCompletedCertification(certId, certName, completedAt, credentialUrl, expiresAt);
     toast({
       title: "Certification Added",
       description: `${certName} has been added to your certifications.`,
     });
   };
 
-  const handleUploadProof = (certId: string, fileName: string) => {
-    uploadProof(certId, fileName);
+  const handleAddExternalCertification = (
+    certName: string,
+    provider: string,
+    completedAt: string,
+    credentialUrl?: string,
+    expiresAt?: string
+  ) => {
+    addExternalCertification(certName, provider, completedAt, credentialUrl, expiresAt);
     toast({
-      title: "Proof Uploaded",
-      description: `${fileName} has been attached to your certification.`,
+      title: "Certification Added",
+      description: `${certName} has been added to your certifications.`,
     });
   };
 
@@ -190,7 +202,6 @@ const Index = () => {
                 </div>
                 <MyCertifications
                   certifications={completedCertifications}
-                  onUploadProof={handleUploadProof}
                   onRemove={removeCompletedCertification}
                 />
               </TabsContent>
@@ -214,6 +225,7 @@ const Index = () => {
         certifications={certifications}
         completedIds={completedCertifications.map((c) => c.certificationId)}
         onAdd={handleAddCertification}
+        onAddExternal={handleAddExternalCertification}
       />
     </div>
   );
