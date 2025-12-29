@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { ExternalLink, ArrowUpDown, ArrowUp, ArrowDown, GraduationCap, CheckCircle2, ChevronLeft, ChevronRight } from "lucide-react";
+import { ExternalLink, ArrowUpDown, ArrowUp, ArrowDown, GraduationCap, CheckCircle2, ChevronLeft, ChevronRight, Clock } from "lucide-react";
 import {
   Table,
   TableBody,
@@ -33,6 +33,7 @@ interface CertificationsTableProps {
   isFavorite?: (id: string) => boolean;
   onApplyFunding?: (cert: Certification) => void;
   hasApplied?: (id: string) => boolean;
+  getApplicationStatus?: (id: string) => "pending" | "approved" | "rejected" | null;
   isCompleted?: (id: string) => boolean;
 }
 
@@ -47,6 +48,7 @@ export const CertificationsTable = ({
   isFavorite,
   onApplyFunding,
   hasApplied,
+  getApplicationStatus,
   isCompleted,
 }: CertificationsTableProps) => {
   const [sortKey, setSortKey] = useState<SortKey | null>(null);
@@ -208,23 +210,36 @@ export const CertificationsTable = ({
                     </TableCell>
                     <TableCell>
                       <div className="flex items-center gap-1">
-                        {onApplyFunding && (
-                          applied ? (
-                            <span className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium text-success bg-success/10 rounded-full">
-                              <CheckCircle2 className="h-3.5 w-3.5" />
-                              Applied
-                            </span>
-                          ) : (
-                            <Button
-                              size="sm"
-                              className="h-8 px-4 bg-gradient-to-r from-primary to-primary/80 hover:from-primary/90 hover:to-primary/70 text-primary-foreground font-medium shadow-sm hover:shadow-md transition-all duration-200 rounded-full"
-                              onClick={() => onApplyFunding(cert)}
-                            >
-                              <GraduationCap className="h-3.5 w-3.5 mr-0.5" />
-                              Apply
-                            </Button>
-                          )
-                        )}
+                        {onApplyFunding && (() => {
+                          const status = getApplicationStatus?.(cert.id);
+                          if (status === "pending") {
+                            return (
+                              <span className="inline-flex items-center justify-center gap-1.5 h-8 w-[105px] text-xs font-semibold text-warning bg-transparent border border-warning rounded-full">
+                                <Clock className="h-3.5 w-3.5" />
+                                Pending
+                              </span>
+                            );
+                          } else if (status === "approved") {
+                            return (
+                              <span className="inline-flex items-center justify-center gap-1.5 h-8 w-[105px] text-xs font-semibold text-success bg-transparent border border-success rounded-full">
+                                <CheckCircle2 className="h-3.5 w-3.5" />
+                                Approved
+                              </span>
+                            );
+                          } else {
+                            // null or "rejected" - show Apply button
+                            return (
+                              <Button
+                                size="sm"
+                                className="h-8 w-[105px] bg-gradient-to-r from-primary to-primary/80 hover:from-primary/90 hover:to-primary/70 text-primary-foreground font-medium shadow-sm hover:shadow-md transition-all duration-200 rounded-full"
+                                onClick={() => onApplyFunding(cert)}
+                              >
+                                <GraduationCap className="h-3.5 w-3.5 mr-1" />
+                                Apply
+                              </Button>
+                            );
+                          }
+                        })()}
                         <Tooltip>
                           <TooltipTrigger asChild>
                             <Button
@@ -308,8 +323,8 @@ export const CertificationsTable = ({
                       variant={currentPage === pageNum ? "default" : "ghost"}
                       size="icon"
                       className={`h-9 w-9 rounded-lg transition-all ${currentPage === pageNum
-                          ? "bg-primary text-primary-foreground shadow-sm"
-                          : "hover:bg-primary/10 hover:text-primary"
+                        ? "bg-primary text-primary-foreground shadow-sm"
+                        : "hover:bg-primary/10 hover:text-primary"
                         }`}
                       onClick={() => setCurrentPage(pageNum)}
                     >

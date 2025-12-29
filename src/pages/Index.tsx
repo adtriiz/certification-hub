@@ -33,6 +33,7 @@ const Index = () => {
     isFavorite,
     applyForFunding,
     hasApplied,
+    getApplicationStatus,
     addCompletedCertification,
     addExternalCertification,
     removeCompletedCertification,
@@ -184,6 +185,7 @@ const Index = () => {
             isFavorite={isFavorite}
             onApplyFunding={setApplyDialogCert}
             hasApplied={hasApplied}
+            getApplicationStatus={getApplicationStatus}
             isCompleted={isCompleted}
           />
 
