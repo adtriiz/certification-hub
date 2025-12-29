@@ -242,6 +242,16 @@ export const useUserCertifications = () => {
     applyForFunding: (certificationId: string, certificationName: string, reason: string, estimatedCost: number) =>
       applyMutation.mutate({ certId: certificationId, certName: certificationName, reason, cost: estimatedCost }),
     hasApplied: (id: string) => applications.some(a => a.certificationId === id),
+    getApplicationStatus: (id: string): "pending" | "approved" | "rejected" | null => {
+      // Find the most recent application for this certification
+      const certApps = applications.filter(a => a.certificationId === id);
+      if (certApps.length === 0) return null;
+      // Sort by appliedAt descending to get most recent
+      const sorted = certApps.sort((a, b) =>
+        new Date(b.appliedAt).getTime() - new Date(a.appliedAt).getTime()
+      );
+      return sorted[0].status;
+    },
     addCompletedCertification: (
       certificationId: string,
       certificationName: string,

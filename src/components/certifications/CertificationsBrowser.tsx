@@ -29,6 +29,7 @@ interface CertificationsBrowserProps {
     isFavorite: (id: string) => boolean;
     onApplyFunding: (cert: Certification) => void;
     hasApplied: (id: string) => boolean;
+    getApplicationStatus: (id: string) => "pending" | "approved" | "rejected" | null;
     isCompleted: (id: string) => boolean;
 }
 
@@ -48,6 +49,7 @@ export const CertificationsBrowser = ({
     isFavorite,
     onApplyFunding,
     hasApplied,
+    getApplicationStatus,
     isCompleted,
 }: CertificationsBrowserProps) => {
     return (
@@ -99,6 +101,7 @@ export const CertificationsBrowser = ({
                     isFavorite={isFavorite}
                     onApplyFunding={onApplyFunding}
                     hasApplied={hasApplied}
+                    getApplicationStatus={getApplicationStatus}
                     isCompleted={isCompleted}
                 />
             </div>
