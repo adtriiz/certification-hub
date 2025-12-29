@@ -1,5 +1,5 @@
-import { useState } from "react";
-import { ExternalLink, ArrowUpDown, ArrowUp, ArrowDown, GraduationCap, CheckCircle2 } from "lucide-react";
+import { useState, useEffect } from "react";
+import { ExternalLink, ArrowUpDown, ArrowUp, ArrowDown, GraduationCap, CheckCircle2, ChevronLeft, ChevronRight } from "lucide-react";
 import {
   Table,
   TableBody,
@@ -19,6 +19,13 @@ import {
 } from "@/components/ui/tooltip";
 import { LevelMeter } from "@/components/ui/level-meter";
 import { QualitySeal } from "@/components/ui/quality-seal";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 
 interface CertificationsTableProps {
   certifications: Certification[];
@@ -44,6 +51,13 @@ export const CertificationsTable = ({
 }: CertificationsTableProps) => {
   const [sortKey, setSortKey] = useState<SortKey | null>(null);
   const [sortDirection, setSortDirection] = useState<SortDirection>(null);
+  const [currentPage, setCurrentPage] = useState(1);
+  const [pageSize, setPageSize] = useState(20);
+
+  // Reset to page 1 when certifications change (e.g., filters applied)
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [certifications]);
 
   const handleSort = (key: SortKey) => {
     if (sortKey === key) {
@@ -77,6 +91,11 @@ export const CertificationsTable = ({
 
     return 0;
   });
+
+  // Pagination calculations
+  const totalPages = Math.ceil(sortedCertifications.length / pageSize);
+  const startIndex = (currentPage - 1) * pageSize;
+  const paginatedCertifications = sortedCertifications.slice(startIndex, startIndex + pageSize);
 
   const SortIcon = ({ columnKey }: { columnKey: SortKey }) => {
     if (sortKey !== columnKey) {
@@ -141,7 +160,7 @@ export const CertificationsTable = ({
                 </TableCell>
               </TableRow>
             ) : (
-              sortedCertifications.map((cert, index) => {
+              paginatedCertifications.map((cert, index) => {
                 const applied = hasApplied?.(cert.id);
                 const completed = isCompleted?.(cert.id);
                 return (
@@ -230,6 +249,88 @@ export const CertificationsTable = ({
           </TableBody>
         </Table>
       </div>
+
+      {/* Pagination Controls */}
+      {sortedCertifications.length > 0 && (
+        <div className="flex flex-col sm:flex-row items-center justify-between gap-4 px-4 py-4 border-t border-border/60">
+          {/* Page Size Selector */}
+          <div className="flex items-center gap-2 text-sm text-muted-foreground">
+            <span>Show</span>
+            <Select
+              value={pageSize.toString()}
+              onValueChange={(value) => {
+                setPageSize(Number(value));
+                setCurrentPage(1);
+              }}
+            >
+              <SelectTrigger className="w-[70px] h-9 rounded-lg border-border/60 bg-background/50">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="10">10</SelectItem>
+                <SelectItem value="20">20</SelectItem>
+                <SelectItem value="50">50</SelectItem>
+              </SelectContent>
+            </Select>
+            <span>per page</span>
+          </div>
+
+          {/* Page Info & Navigation */}
+          <div className="flex items-center gap-4">
+            <span className="text-sm text-muted-foreground">
+              {startIndex + 1}–{Math.min(startIndex + pageSize, sortedCertifications.length)} of {sortedCertifications.length}
+            </span>
+            <div className="flex items-center gap-1">
+              <Button
+                variant="outline"
+                size="icon"
+                className="h-9 w-9 rounded-lg border-border/60 hover:bg-primary/10 hover:text-primary hover:border-primary/30 transition-all disabled:opacity-40"
+                onClick={() => setCurrentPage((p) => Math.max(1, p - 1))}
+                disabled={currentPage === 1}
+              >
+                <ChevronLeft className="h-4 w-4" />
+              </Button>
+              <div className="flex items-center gap-1 px-2">
+                {Array.from({ length: Math.min(totalPages, 5) }, (_, i) => {
+                  let pageNum: number;
+                  if (totalPages <= 5) {
+                    pageNum = i + 1;
+                  } else if (currentPage <= 3) {
+                    pageNum = i + 1;
+                  } else if (currentPage >= totalPages - 2) {
+                    pageNum = totalPages - 4 + i;
+                  } else {
+                    pageNum = currentPage - 2 + i;
+                  }
+                  return (
+                    <Button
+                      key={pageNum}
+                      variant={currentPage === pageNum ? "default" : "ghost"}
+                      size="icon"
+                      className={`h-9 w-9 rounded-lg transition-all ${currentPage === pageNum
+                          ? "bg-primary text-primary-foreground shadow-sm"
+                          : "hover:bg-primary/10 hover:text-primary"
+                        }`}
+                      onClick={() => setCurrentPage(pageNum)}
+                    >
+                      {pageNum}
+                    </Button>
+                  );
+                })}
+              </div>
+              <Button
+                variant="outline"
+                size="icon"
+                className="h-9 w-9 rounded-lg border-border/60 hover:bg-primary/10 hover:text-primary hover:border-primary/30 transition-all disabled:opacity-40"
+                onClick={() => setCurrentPage((p) => Math.min(totalPages, p + 1))}
+                disabled={currentPage === totalPages}
+              >
+                <ChevronRight className="h-4 w-4" />
+              </Button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };
