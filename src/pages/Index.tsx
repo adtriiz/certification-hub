@@ -149,9 +149,9 @@ const Index = () => {
                   <TabsTrigger value="applications" className="gap-2 data-[state=active]:bg-primary data-[state=active]:text-primary-foreground">
                     <FileText className="h-4 w-4" />
                     My Applications
-                    {applications.length > 0 && (
+                    {applications.filter(a => a.status === 'pending').length > 0 && (
                       <Badge variant="secondary" className="ml-1 bg-accent text-accent-foreground">
-                        {applications.length}
+                        {applications.filter(a => a.status === 'pending').length}
                       </Badge>
                     )}
                   </TabsTrigger>
