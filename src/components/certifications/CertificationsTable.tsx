@@ -32,7 +32,6 @@ interface CertificationsTableProps {
   onToggleFavorite?: (id: string) => void;
   isFavorite?: (id: string) => boolean;
   onApplyFunding?: (cert: Certification) => void;
-  hasApplied?: (id: string) => boolean;
   getApplicationStatus?: (id: string) => "pending" | "approved" | "rejected" | null;
   isCompleted?: (id: string) => boolean;
 }
@@ -47,7 +46,6 @@ export const CertificationsTable = ({
   onToggleFavorite,
   isFavorite,
   onApplyFunding,
-  hasApplied,
   getApplicationStatus,
   isCompleted,
 }: CertificationsTableProps) => {
@@ -163,7 +161,6 @@ export const CertificationsTable = ({
               </TableRow>
             ) : (
               paginatedCertifications.map((cert, index) => {
-                const applied = hasApplied?.(cert.id);
                 const completed = isCompleted?.(cert.id);
                 return (
                   <TableRow

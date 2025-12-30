@@ -24,7 +24,7 @@ export const useUserCertifications = () => {
       if (error) throw error;
 
       // Defensive JS-level filtering as fallback
-      return (data || []).filter((item: any) => item.user_id === user.id);
+      return (data || []).filter((item: { user_id: string }) => item.user_id === user.id);
     },
     enabled: !!user
   });
@@ -41,7 +41,7 @@ export const useUserCertifications = () => {
 
       if (error) throw error;
 
-      return (data || []).filter((item: any) => item.user_id === user.id);
+      return (data || []).filter((item: { user_id: string }) => item.user_id === user.id);
     },
     enabled: !!user
   });
@@ -61,7 +61,7 @@ export const useUserCertifications = () => {
       if (error) throw error;
 
       // Defensive JS-level filtering as fallback
-      const filteredData = (data || []).filter((item: any) => item.user_id === user.id);
+      const filteredData = (data || []).filter((item: { user_id: string }) => item.user_id === user.id);
 
       return filteredData.map(app => ({
         id: app.id,
@@ -97,7 +97,7 @@ export const useUserCertifications = () => {
       expiresAt: c.expires_at
     }));
 
-  const externalCompleted: CompletedCertification[] = externalCerts.map((c: any) => ({
+  const externalCompleted: CompletedCertification[] = externalCerts.map((c: { id: string; certification_name: string; completed_at: string; credential_url?: string; provider: string; expires_at?: string }) => ({
     id: c.id,
     certificationId: c.id, // Use same id as certificationId for external
     certificationName: c.certification_name,
