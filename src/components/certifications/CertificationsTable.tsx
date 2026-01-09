@@ -32,6 +32,7 @@ interface CertificationsTableProps {
   onToggleFavorite?: (id: string) => void;
   isFavorite?: (id: string) => boolean;
   onApplyFunding?: (cert: Certification) => void;
+  hasApplied?: (id: string) => boolean;
   getApplicationStatus?: (id: string) => "pending" | "approved" | "rejected" | null;
   isCompleted?: (id: string) => boolean;
 }
@@ -46,11 +47,12 @@ export const CertificationsTable = ({
   onToggleFavorite,
   isFavorite,
   onApplyFunding,
+  hasApplied,
   getApplicationStatus,
   isCompleted,
 }: CertificationsTableProps) => {
-  const [sortKey, setSortKey] = useState<SortKey | null>(null);
-  const [sortDirection, setSortDirection] = useState<SortDirection>(null);
+  const [sortKey, setSortKey] = useState<SortKey>("certificateQuality");
+  const [sortDirection, setSortDirection] = useState<SortDirection>("desc");
   const [currentPage, setCurrentPage] = useState(1);
   const [pageSize, setPageSize] = useState(20);
 
@@ -74,6 +76,34 @@ export const CertificationsTable = ({
   };
 
   const sortedCertifications = [...certifications].sort((a, b) => {
+    // Default sorting: by quality (desc), then experience level (desc)
+    if (sortKey === "certificateQuality" && sortDirection === "desc") {
+      // Quality order (high to low) - numeric values from Google Sheets
+      const qualityOrder = ["5", "4", "3", "2", "1"];
+      const aQualityIndex = qualityOrder.indexOf(a.certificateQuality.toLowerCase());
+      const bQualityIndex = qualityOrder.indexOf(b.certificateQuality.toLowerCase());
+      
+      // If quality is the same, sort by experience level (desc)
+      if (aQualityIndex === bQualityIndex) {
+        const experienceOrder = ["expert", "advanced", "intermediate", "entry-level"];
+        const aExperienceIndex = experienceOrder.indexOf(a.experienceLevel.toLowerCase());
+        const bExperienceIndex = experienceOrder.indexOf(b.experienceLevel.toLowerCase());
+        
+        if (aExperienceIndex === -1 && bExperienceIndex === -1) return 0;
+        if (aExperienceIndex === -1) return 1;
+        if (bExperienceIndex === -1) return -1;
+        return aExperienceIndex - bExperienceIndex;
+      }
+      
+      // Handle unknown quality values
+      if (aQualityIndex === -1 && bQualityIndex === -1) return a.certificateQuality.localeCompare(b.certificateQuality);
+      if (aQualityIndex === -1) return 1;
+      if (bQualityIndex === -1) return -1;
+      
+      return aQualityIndex - bQualityIndex;
+    }
+
+    // Regular sorting for other columns
     if (!sortKey || !sortDirection) return 0;
 
     const aVal = a[sortKey];
