@@ -4,7 +4,7 @@ import { Button } from "@/components/ui/button";
 import { TabsContent } from "@/components/ui/tabs";
 import { SearchBar } from "./SearchBar";
 import { FilterBar, Filters } from "./FilterBar";
-import { CertificationsTable } from "./CertificationsTable";
+import { MemoizedCertificationsTable as CertificationsTable } from "./CertificationsTable";
 import { Certification } from "@/data/certifications";
 
 interface CertificationsBrowserProps {

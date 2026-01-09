@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, memo } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "@/components/AuthProvider";
 import { supabase } from "@/integrations/supabase/client";
@@ -962,4 +962,4 @@ const AdminDashboard = () => {
     );
 };
 
-export default AdminDashboard;
+export default memo(AdminDashboard);

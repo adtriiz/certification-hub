@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, memo } from "react";
 import { ExternalLink, ArrowUpDown, ArrowUp, ArrowDown, GraduationCap, CheckCircle2, ChevronLeft, ChevronRight, Clock } from "lucide-react";
 import {
   Table,
@@ -42,7 +42,7 @@ type SortDirection = "asc" | "desc" | null;
 
 
 
-export const CertificationsTable = ({
+const CertificationsTable = ({
   certifications,
   onToggleFavorite,
   isFavorite,
@@ -376,3 +376,5 @@ export const CertificationsTable = ({
     </div>
   );
 };
+
+export const MemoizedCertificationsTable = memo(CertificationsTable);

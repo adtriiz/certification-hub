@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, memo } from "react";
 import { Link } from "react-router-dom";
 import { Award, FileText, GraduationCap, Plus, Sparkles, LogOut, LayoutDashboard, Loader2 } from "lucide-react";
 import { MyApplications } from "@/components/certifications/MyApplications";
@@ -233,4 +233,4 @@ const Index = () => {
   );
 };
 
-export default Index;
+export default memo(Index);
