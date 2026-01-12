@@ -9,7 +9,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { toast } from "sonner";
-import { RefreshCw, Check, X, ShieldAlert, ArrowLeft, Loader2, Users, FileText, Activity, TrendingUp, DollarSign, Calendar, AlertCircle } from "lucide-react";
+import { RefreshCw, Check, X, ShieldAlert, ArrowLeft, Loader2, Users, FileText, Activity, TrendingUp, DollarSign, Calendar, AlertCircle, Clock, ExternalLink } from "lucide-react";
 import { parseNameFromEmail } from "@/lib/utils";
 import {
     Dialog,
@@ -100,6 +100,8 @@ const AdminDashboard = () => {
     const [approvedApplications, setApprovedApplications] = useState<Application[]>([]);
     const [allUsers, setAllUsers] = useState<UserProfile[]>([]);
     const [reversingApp, setReversingApp] = useState<{ id: string, status: 'pending' | 'rejected' } | null>(null);
+    const [certificationsForReview, setCertificationsForReview] = useState<any[]>([]);
+    const [loadingReviews, setLoadingReviews] = useState(false);
 
     useEffect(() => {
         if (!authLoading && !adminLoading && !isAdmin) {
@@ -115,6 +117,7 @@ const AdminDashboard = () => {
             fetchApprovedApplications();
             fetchUsers();
             fetchSettings();
+            fetchCertificationsForReview();
         }
     }, [isAdmin]);
 
@@ -339,6 +342,55 @@ const AdminDashboard = () => {
         }
     };
 
+    const fetchCertificationsForReview = async () => {
+        setLoadingReviews(true);
+        try {
+            const threeMonthsAgo = new Date();
+            threeMonthsAgo.setMonth(threeMonthsAgo.getMonth() - 3);
+            const oneWeekAgo = new Date();
+            oneWeekAgo.setDate(oneWeekAgo.getDate() - 7); // Exclude very recent checks
+            
+            const { data, error } = await supabase
+                .from('certifications')
+                .select('*')
+                .or(`last_checked.lt.${threeMonthsAgo.toISOString()},and(last_checked.lt.${oneWeekAgo.toISOString()}),last_checked.is.null`)
+                .order('last_checked', { ascending: true });
+
+            if (error) {
+                console.error("Error fetching certifications for review:", error);
+                toast.error("Failed to load certifications for review");
+                return;
+            }
+
+            setCertificationsForReview(data || []);
+        } catch (error) {
+            console.error("Failed to load certifications for review", error);
+            toast.error("Failed to load certifications for review");
+        } finally {
+            setLoadingReviews(false);
+        }
+    };
+
+    const markAsChecked = async (certId: string) => {
+        try {
+            const { error } = await supabase
+                .from('certifications')
+                .update({ last_checked: new Date().toISOString() })
+                .eq('id', certId);
+
+            if (error) {
+                toast.error("Failed to mark certification as checked");
+                return;
+            }
+
+            toast.success("Certification marked as checked");
+            fetchCertificationsForReview();
+        } catch (error) {
+            console.error("Failed to mark certification as checked", error);
+            toast.error("Failed to mark certification as checked");
+        }
+    };
+
     const handleSync = async () => {
         const cleanSheetId = sheetId.trim();
         const cleanSheetName = sheetName.trim();
@@ -429,7 +481,7 @@ const AdminDashboard = () => {
                     currency: getVal(idxCurrency) || "USD",
                     experience_level: getVal(idxLevel),
                     certificate_quality: getVal(idxQuality),
-                    last_checked: getVal(idxLastChecked) ? new Date(getVal(idxLastChecked)).toISOString() : new Date().toISOString(),
+                    last_checked: getVal(idxLastChecked) ? new Date(getVal(idxLastChecked)).toISOString() : null,
                     notes: getVal(idxNotes),
                     price_in_eur: parsePrice(getVal(idxPriceEur))
                 };
@@ -531,6 +583,9 @@ const AdminDashboard = () => {
                         </TabsTrigger>
                         <TabsTrigger value="sync" className="gap-2 data-[state=active]:bg-primary data-[state=active]:text-primary-foreground transition-all px-6 py-2">
                             <RefreshCw className="h-4 w-4" /> Sync Data
+                        </TabsTrigger>
+                        <TabsTrigger value="reviews" className="gap-2 data-[state=active]:bg-primary data-[state=active]:text-primary-foreground transition-all px-6 py-2">
+                            <Clock className="h-4 w-4" /> Certification Reviews
                         </TabsTrigger>
                     </TabsList>
 
@@ -924,6 +979,125 @@ const AdminDashboard = () => {
                                     <div className="flex items-center gap-3 pt-6 border-t border-border/40 text-sm text-muted-foreground animate-fade-in">
                                         <Calendar className="h-4 w-4 text-primary opacity-60" />
                                         <span>Last successful synchronization: <span className="font-bold text-foreground">{lastSync}</span></span>
+                                    </div>
+                                )}
+                            </CardContent>
+                        </Card>
+                    </TabsContent>
+
+                    <TabsContent value="reviews" className="animate-fade-in">
+                        <Card className="shadow-soft border-border/60 bg-card/80 backdrop-blur-sm">
+                            <CardHeader>
+                                <CardTitle className="text-xl flex items-center gap-2">
+                                    <Clock className="h-5 w-5 text-orange-600" /> Certification Reviews
+                                </CardTitle>
+                                <CardDescription>
+                                    Certifications that haven't been checked in over 3 months requiring review.
+                                </CardDescription>
+                            </CardHeader>
+                            <CardContent>
+                                {loadingReviews ? (
+                                    <div className="text-center py-16 border-2 border-dashed border-border/60 rounded-xl bg-zinc-50/30 dark:bg-zinc-900/30">
+                                        <p className="text-muted-foreground flex items-center justify-center gap-2">
+                                            <Clock className="h-5 w-5" /> Loading certification reviews...
+                                        </p>
+                                    </div>
+                                ) : certificationsForReview.length === 0 ? (
+                                    <div className="text-center py-16 border-2 border-dashed border-border/60 rounded-xl bg-zinc-50/30 dark:bg-zinc-900/30">
+                                        <p className="text-muted-foreground flex items-center justify-center gap-2">
+                                            <Check className="h-5 w-5 text-green-500" /> All certifications are up to date!
+                                        </p>
+                                    </div>
+                                ) : (
+                                    <div className="rounded-xl border border-border/60 overflow-hidden shadow-sm">
+                                        <Table>
+                                            <TableHeader className="bg-secondary/50 dark:bg-zinc-900/50">
+                                                <TableRow>
+                                                    <TableHead className="py-4 font-bold">Certification (URL)</TableHead>
+                                                    <TableHead className="py-4 font-bold text-right">Price</TableHead>
+                                                    <TableHead className="py-4 font-bold">Last Checked</TableHead>
+                                                    <TableHead className="py-4 font-bold text-center">Days Since</TableHead>
+                                                    <TableHead className="py-4 text-right font-bold pr-6">Actions</TableHead>
+                                                </TableRow>
+                                            </TableHeader>
+                                            <TableBody>
+                                                {certificationsForReview.map((cert) => {
+                                                    const lastChecked = cert.last_checked ? new Date(cert.last_checked) : null;
+                                                    const daysSince = lastChecked ? Math.floor((new Date().getTime() - lastChecked.getTime()) / (1000 * 60 * 60 * 24)) : 999;
+                                                    const isOlderThan3Months = daysSince > 90;
+                                                    const isBetween2And3Months = daysSince >= 60 && daysSince <= 90;
+                                                    
+                                                    return (
+                                                        <TableRow key={cert.id} className="hover:bg-secondary/30 transition-colors">
+                                                            <TableCell className="py-4">
+                                                                <div className="flex flex-col">
+                                                                    {cert.url ? (
+                                                                        <a
+                                                                            href={cert.url}
+                                                                            target="_blank"
+                                                                            rel="noopener noreferrer"
+                                                                            className="font-semibold text-foreground hover:text-primary transition-colors underline underline-offset-2"
+                                                                            title={`Visit ${cert.certification_name} certification page`}
+                                                                        >
+                                                                            {cert.certification_name}
+                                                                        </a>
+                                                                    ) : (
+                                                                        <span className="font-semibold text-foreground">{cert.certification_name}</span>
+                                                                    )}
+                                                                    <span className="text-xs text-muted-foreground">{cert.domain}</span>
+                                                                </div>
+                                                            </TableCell>
+                                                            <TableCell className="py-4 text-right">
+                                                                <div className="flex flex-col">
+                                                                    <span className="font-bold text-primary">
+                                                                        {cert.price ? `${cert.price}${cert.currency || 'USD'}` : 'N/A'}
+                                                                    </span>
+                                                                    <span className="text-xs text-muted-foreground">
+                                                                        {cert.price_in_eur ? `(~€${cert.price_in_eur})` : ''}
+                                                                    </span>
+                                                                </div>
+                                                            </TableCell>
+                                                            <TableCell className="py-4">
+                                                                <div className="flex flex-col">
+                                                                    <span className="font-medium">
+                                                                        {lastChecked ? lastChecked.toLocaleDateString() : 'Never'}
+                                                                    </span>
+                                                                    {lastChecked && (
+                                                                        <span className="text-xs text-muted-foreground">
+                                                                            {lastChecked.toLocaleTimeString()}
+                                                                        </span>
+                                                                    )}
+                                                                </div>
+                                                            </TableCell>
+                                                            <TableCell className="py-4 text-center">
+                                                                <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-bold ${
+                                                                    isOlderThan3Months 
+                                                                        ? 'bg-red-100 text-red-700 dark:bg-red-900/30' 
+                                                                        : isBetween2And3Months 
+                                                                            ? 'bg-amber-100 text-amber-700 dark:bg-amber-900/30' 
+                                                                            : 'bg-slate-100 text-slate-600 dark:bg-slate-800'
+                                                                }`}>
+                                                                    {daysSince === 999 ? 'N/A' : `${daysSince} days`}
+                                                                </span>
+                                                            </TableCell>
+                                                            <TableCell className="py-4 text-right pr-6">
+                                                                <div className="flex justify-end gap-2">
+                                                                    <Button
+                                                                        size="sm"
+                                                                        variant="outline"
+                                                                        className="h-8 text-xs gap-1.5 border-primary/20 hover:bg-primary/5 hover:text-primary transition-all rounded-lg"
+                                                                        onClick={() => markAsChecked(cert.id)}
+                                                                    >
+                                                                        <Check className="h-3.5 w-3.5" />
+                                                                        Mark Checked
+                                                                    </Button>
+                                                                </div>
+                                                            </TableCell>
+                                                        </TableRow>
+                                                    );
+                                                })}
+                                            </TableBody>
+                                        </Table>
                                     </div>
                                 )}
                             </CardContent>
