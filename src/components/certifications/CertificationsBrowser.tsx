@@ -1,11 +1,14 @@
-import { Heart } from "lucide-react";
+import { useState } from "react";
+import { Heart, Plus } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { TabsContent } from "@/components/ui/tabs";
 import { SearchBar } from "./SearchBar";
 import { FilterBar, Filters } from "./FilterBar";
 import { MemoizedCertificationsTable as CertificationsTable } from "./CertificationsTable";
+import { SuggestCertificationDialog } from "./SuggestCertificationDialog";
 import { Certification } from "@/data/certifications";
+import { useCertificationSuggestions } from "@/hooks/useCertificationSuggestions";
 
 interface CertificationsBrowserProps {
     searchQuery: string;
@@ -52,6 +55,17 @@ export const CertificationsBrowser = ({
     getApplicationStatus,
     isCompleted,
 }: CertificationsBrowserProps) => {
+    const [showSuggestDialog, setShowSuggestDialog] = useState(false);
+    const { suggestCertification } = useCertificationSuggestions();
+
+    const handleSuggestCertification = (
+        certificationName: string,
+        provider: string,
+        reason: string,
+        url: string
+    ) => {
+        suggestCertification(certificationName, provider, reason, url);
+    };
     return (
         <TabsContent value="browse" className="space-y-6">
             {/* Search and Stats */}
@@ -68,6 +82,16 @@ export const CertificationsBrowser = ({
                     </Button>
                 </div>
                 <div className="flex items-center gap-3 text-sm text-muted-foreground">
+                    <Button
+                        variant="outline"
+                        size="sm"
+                        className="gap-2 rounded-xl hover-lift border-border/60 hover:border-primary/40"
+                        onClick={() => setShowSuggestDialog(true)}
+                    >
+                        <Plus className="h-4 w-4" />
+                        Suggest Certification
+                    </Button>
+                    
                     <span className="font-medium">
                         <Badge variant="outline" className="font-mono text-foreground mr-1">
                             {filteredCertifications.length}
@@ -105,6 +129,13 @@ export const CertificationsBrowser = ({
                     isCompleted={isCompleted}
                 />
             </div>
+
+            {/* Suggest Certification Dialog */}
+            <SuggestCertificationDialog
+                open={showSuggestDialog}
+                onOpenChange={setShowSuggestDialog}
+                onSuggest={handleSuggestCertification}
+            />
         </TabsContent>
     );
 };

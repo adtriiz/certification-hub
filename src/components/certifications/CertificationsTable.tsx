@@ -47,7 +47,7 @@ const CertificationsTable = ({
   onToggleFavorite,
   isFavorite,
   onApplyFunding,
-  hasApplied,
+  
   getApplicationStatus,
   isCompleted,
 }: CertificationsTableProps) => {
@@ -66,7 +66,7 @@ const CertificationsTable = ({
       if (sortDirection === "asc") {
         setSortDirection("desc");
       } else if (sortDirection === "desc") {
-        setSortKey(null);
+        // setSortKey(null as any);
         setSortDirection(null);
       }
     } else {

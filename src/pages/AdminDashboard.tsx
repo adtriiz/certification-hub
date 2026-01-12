@@ -9,8 +9,11 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { toast } from "sonner";
-import { RefreshCw, Check, X, ShieldAlert, ArrowLeft, Loader2, Users, FileText, Activity, TrendingUp, DollarSign, Calendar, AlertCircle, Clock, ExternalLink } from "lucide-react";
+import { RefreshCw, Check, X, ShieldAlert, ArrowLeft, Loader2, Users, FileText, Activity, TrendingUp, DollarSign, Calendar, AlertCircle, Clock, Plus, ExternalLink } from "lucide-react";
 import { parseNameFromEmail } from "@/lib/utils";
+import { useCertificationSuggestions } from "@/hooks/useCertificationSuggestions";
+import { AcceptSuggestionDialog } from "@/components/certifications/AcceptSuggestionDialog";
+import { UserCompletedCertifications } from "@/types/userCertifications";
 import {
     Dialog,
     DialogContent,
@@ -70,6 +73,7 @@ interface UserProfile {
     totalApps: number;
     approvedApps: number;
     totalFunding: number;
+    completedCerts: number;
     applications?: {
         status: string;
         estimated_cost: number;
@@ -100,8 +104,31 @@ const AdminDashboard = () => {
     const [approvedApplications, setApprovedApplications] = useState<Application[]>([]);
     const [allUsers, setAllUsers] = useState<UserProfile[]>([]);
     const [reversingApp, setReversingApp] = useState<{ id: string, status: 'pending' | 'rejected' } | null>(null);
-    const [certificationsForReview, setCertificationsForReview] = useState<any[]>([]);
+    const [certificationsForReview, setCertificationsForReview] = useState<{
+        id: string;
+        certification_name: string;
+        domain: string;
+        language_framework: string;
+        provider: string;
+        price: number;
+        currency: string;
+        experience_level: string;
+        certificate_quality: string;
+        last_checked: string | null;
+        notes: string;
+        url: string;
+        price_in_eur: number;
+    }[]>([]);
     const [loadingReviews, setLoadingReviews] = useState(false);
+    const [showAcceptDialog, setShowAcceptDialog] = useState(false);
+    const [selectedSuggestion, setSelectedSuggestion] = useState<{ id: string; name: string } | null>(null);
+    const [completedCertifications, setCompletedCertifications] = useState<UserCompletedCertifications[]>([]);
+    const [completedLoading, setCompletedLoading] = useState(false);
+    const [completedPage, setCompletedPage] = useState(1);
+    const [completedTotal, setCompletedTotal] = useState(0);
+    const completedPageSize = 10;
+    
+    const { allSuggestions, updateSuggestionStatus, isUpdating } = useCertificationSuggestions();
 
     useEffect(() => {
         if (!authLoading && !adminLoading && !isAdmin) {
@@ -118,6 +145,7 @@ const AdminDashboard = () => {
             fetchUsers();
             fetchSettings();
             fetchCertificationsForReview();
+            fetchCompletedCertifications();
         }
     }, [isAdmin]);
 
@@ -316,7 +344,7 @@ const AdminDashboard = () => {
     const fetchUsers = async () => {
         const { data: users } = await supabase
             .from('profiles')
-            .select('*, applications(status, estimated_cost, certifications(certification_name))');
+            .select('*, applications(status, estimated_cost, certifications(certification_name)), user_certifications(status), external_certifications(certification_name)');
 
         if (users) {
             const enrichedUsers: UserProfile[] = (users as unknown as {
@@ -326,16 +354,25 @@ const AdminDashboard = () => {
                     status: string;
                     estimated_cost: number;
                     certifications: { certification_name: string }
-                }[]
+                }[];
+                user_certifications: { status: string }[];
+                external_certifications: { certification_name: string }[];
             }[]).map(u => {
                 const userApps = u.applications || [];
+                const userInternalCerts = u.user_certifications || [];
+                const userExternalCerts = u.external_certifications || [];
+                
+                const completedInternal = userInternalCerts.filter(c => c.status === 'completed').length;
+                const completedExternal = userExternalCerts.length; // All external certs are completed by definition
+                
                 return {
                     ...u,
                     totalApps: userApps.length,
                     approvedApps: userApps.filter(a => a.status === 'approved').length,
                     totalFunding: userApps
                         .filter(a => a.status === 'approved')
-                        .reduce((sum, a) => sum + (Number(a.estimated_cost) || 0), 0)
+                        .reduce((sum, a) => sum + (Number(a.estimated_cost) || 0), 0),
+                    completedCerts: completedInternal + completedExternal
                 };
             });
             setAllUsers(enrichedUsers);
@@ -368,6 +405,133 @@ const AdminDashboard = () => {
             toast.error("Failed to load certifications for review");
         } finally {
             setLoadingReviews(false);
+        }
+    };
+
+    const fetchCompletedCertifications = async (page: number = 1) => {
+        setCompletedLoading(true);
+        try {
+            const offset = (page - 1) * completedPageSize;
+            setCompletedPage(page);
+
+            // Fetch internal completed certifications with simplified approach
+            const { data: internalData, error: internalError } = await supabase
+                .from('user_certifications')
+                .select(`
+                    id,
+                    user_id,
+                    status,
+                    completed_at,
+                    credential_url,
+                    expires_at,
+                    certification_id,
+                    updated_at,
+                    certifications!inner(certification_name, provider)
+                `)
+                .eq('status', 'completed')
+                .order('completed_at', { ascending: false });
+
+            // Fetch external completed certifications
+            const { data: externalData, error: externalError } = await supabase
+                .from('external_certifications')
+                .select('*')
+                .order('completed_at', { ascending: false });
+
+            if (internalError) throw internalError;
+            if (externalError) throw externalError;
+
+            // Get user profiles
+            const userIds = new Set();
+            internalData?.forEach(item => userIds.add(item.user_id));
+            externalData?.forEach(item => userIds.add(item.user_id));
+            
+            const { data: profiles } = await supabase
+                .from('profiles')
+                .select('id, email')
+                .in('id', Array.from(userIds));
+
+            const profileMap = new Map(profiles?.map(p => [p.id, p]));
+
+            // Combine and group by user
+            const userMap = new Map<string, UserCompletedCertifications>();
+
+            // Process internal certifications
+            internalData?.forEach((item: any) => { // eslint-disable-line @typescript-eslint/no-explicit-any
+                const profile = profileMap.get(item.user_id);
+                if (!profile) return;
+
+                if (!userMap.has(item.user_id)) {
+                    userMap.set(item.user_id, {
+                        userId: item.user_id,
+                        userEmail: profile.email,
+                        completedCount: 0,
+                        certifications: []
+                    });
+                }
+
+                const userCert = userMap.get(item.user_id)!;
+                userCert.completedCount++;
+                
+                // Handle the joined certification data
+                const certData = item.certifications;
+                const certificationName = certData?.certification_name || "Unknown";
+                const provider = Array.isArray(certData?.provider) 
+                    ? certData.provider.join(", ") 
+                    : certData?.provider || "Unknown Provider";
+                
+                userCert.certifications.push({
+                    id: item.id,
+                    certificationId: item.certification_id,
+                    certificationName,
+                    completedAt: item.completed_at || item.updated_at,
+                    credentialUrl: item.credential_url || undefined,
+                    provider,
+                    isExternal: false,
+                    expiresAt: item.expires_at || undefined
+                });
+            });
+
+            // Process external certifications
+            externalData?.forEach((item: any) => { // eslint-disable-line @typescript-eslint/no-explicit-any
+                const profile = profileMap.get(item.user_id);
+                if (!profile) return;
+
+                if (!userMap.has(item.user_id)) {
+                    userMap.set(item.user_id, {
+                        userId: item.user_id,
+                        userEmail: profile.email,
+                        completedCount: 0,
+                        certifications: []
+                    });
+                }
+
+                const userCert = userMap.get(item.user_id)!;
+                userCert.completedCount++;
+                userCert.certifications.push({
+                    id: item.id,
+                    certificationId: item.id,
+                    certificationName: item.certification_name,
+                    completedAt: item.completed_at,
+                    credentialUrl: item.credential_url || undefined,
+                    provider: item.provider,
+                    isExternal: true,
+                    expiresAt: item.expires_at || undefined
+                });
+            });
+
+            const allCompleted = Array.from(userMap.values())
+                .sort((a, b) => b.completedCount - a.completedCount);
+
+            const total = allCompleted.length;
+            const paginated = allCompleted.slice(offset, offset + completedPageSize);
+
+            setCompletedTotal(total);
+            setCompletedCertifications(paginated);
+        } catch (error) {
+            console.error("Failed to load completed certifications", error);
+            toast.error("Failed to load completed certifications");
+        } finally {
+            setCompletedLoading(false);
         }
     };
 
@@ -485,7 +649,7 @@ const AdminDashboard = () => {
                     notes: getVal(idxNotes),
                     price_in_eur: parsePrice(getVal(idxPriceEur))
                 };
-            }).filter((c) => c.certification_name && c.certification_name !== "Unknown");
+            }).filter((c: typeof certificationsToUpsert[0]) => c.certification_name && c.certification_name !== "Unknown");
 
             for (const cert of certificationsToUpsert) {
                 const { data: existing } = await supabase.from('certifications').select('id').eq('certification_name', cert.certification_name).maybeSingle();
@@ -525,6 +689,22 @@ const AdminDashboard = () => {
             fetchStats();
             fetchUsers();
         }
+    };
+
+    const handleRejectSuggestion = (id: string) => {
+        updateSuggestionStatus(id, 'rejected');
+    };
+
+    const handleAcceptSuggestion = (id: string, name: string) => {
+        setSelectedSuggestion({ id, name });
+        setShowAcceptDialog(true);
+    };
+
+    const handleConfirmAccept = (adminNotes: string) => {
+        if (selectedSuggestion) {
+            updateSuggestionStatus(selectedSuggestion.id, 'approved', adminNotes);
+        }
+        setSelectedSuggestion(null);
     };
 
     if (authLoading || adminLoading) return <div className="min-h-screen flex items-center justify-center"><Loader2 className="animate-spin h-8 w-8 text-primary" /></div>;
@@ -580,6 +760,12 @@ const AdminDashboard = () => {
                         </TabsTrigger>
                         <TabsTrigger value="users" className="gap-2 data-[state=active]:bg-primary data-[state=active]:text-primary-foreground transition-all px-6 py-2">
                             <Users className="h-4 w-4" /> User Analytics
+                        </TabsTrigger>
+                        <TabsTrigger value="suggestions" className="gap-2 data-[state=active]:bg-primary data-[state=active]:text-primary-foreground transition-all px-6 py-2">
+                            <Plus className="h-4 w-4" /> Certification Suggestions
+                        </TabsTrigger>
+                        <TabsTrigger value="completed" className="gap-2 data-[state=active]:bg-primary data-[state=active]:text-primary-foreground transition-all px-6 py-2">
+                            <Check className="h-4 w-4" /> Completed Certifications
                         </TabsTrigger>
                         <TabsTrigger value="sync" className="gap-2 data-[state=active]:bg-primary data-[state=active]:text-primary-foreground transition-all px-6 py-2">
                             <RefreshCw className="h-4 w-4" /> Sync Data
@@ -782,6 +968,7 @@ const AdminDashboard = () => {
                                                 <TableHead className="py-4 font-bold">Member</TableHead>
                                                 <TableHead className="py-4 font-bold text-center">Requests</TableHead>
                                                 <TableHead className="py-4 font-bold text-center">Approved</TableHead>
+                                                <TableHead className="py-4 font-bold text-center">Completed</TableHead>
                                                 <TableHead className="py-4 text-right font-bold pr-6">Total Funding Used</TableHead>
                                             </TableRow>
                                         </TableHeader>
@@ -798,6 +985,11 @@ const AdminDashboard = () => {
                                                     <TableCell className="py-4 text-center">
                                                         <span className={`inline-flex items-center px-2 py-0.5 rounded-full text-xs font-bold ${u.approvedApps > 0 ? 'bg-green-100 text-green-700 dark:bg-green-900/30' : 'bg-zinc-100 text-muted-foreground'}`}>
                                                             {u.approvedApps}
+                                                        </span>
+                                                    </TableCell>
+                                                    <TableCell className="py-4 text-center">
+                                                        <span className={`inline-flex items-center px-2 py-0.5 rounded-full text-xs font-bold ${u.completedCerts > 0 ? 'bg-blue-100 text-blue-700 dark:bg-blue-900/30' : 'bg-zinc-100 text-muted-foreground'}`}>
+                                                            {u.completedCerts}
                                                         </span>
                                                     </TableCell>
                                                     <TableCell className="py-4 text-right pr-6">
@@ -1101,6 +1293,218 @@ const AdminDashboard = () => {
                                     </div>
                                 )}
                             </CardContent>
+</Card>
+                    </TabsContent>
+
+                    <TabsContent value="completed" className="space-y-6">
+                        <Card className="shadow-soft border-border/60 bg-card/80 backdrop-blur-sm">
+                            <CardHeader>
+                                <CardTitle className="text-xl">Completed Certifications</CardTitle>
+                                <CardDescription>View all certifications completed by team members.</CardDescription>
+                            </CardHeader>
+                            <CardContent>
+                                {completedCertifications.length === 0 ? (
+                                    <div className="text-center py-16 border-2 border-dashed border-border/60 rounded-xl bg-zinc-50/30 dark:bg-zinc-900/30">
+                                        <p className="text-muted-foreground flex items-center justify-center gap-2">
+                                            <Check className="h-5 w-5 text-blue-500" /> No completed certifications found.
+                                        </p>
+                                    </div>
+                                ) : (
+                                    <>
+                                        <div className="mb-4 text-sm text-muted-foreground">
+                                            Showing {completedCertifications.length} of {completedTotal} completed certifications
+                                        </div>
+                                        <div className="space-y-6">
+                                            {completedCertifications.map((userCert) => (
+                                                <div key={userCert.userId} className="border border-border/60 rounded-xl p-6 bg-card/50">
+                                                    <div className="flex justify-between items-start mb-4">
+                                                        <div>
+                                                            <h3 className="font-semibold text-foreground text-lg">
+                                                                {parseNameFromEmail(userCert.userEmail)}
+                                                            </h3>
+                                                            <p className="text-sm text-muted-foreground">{userCert.userEmail}</p>
+                                                        </div>
+                                                        <Badge className="bg-blue-100 text-blue-700 border-blue-200">
+                                                            {userCert.completedCount} Completed
+                                                        </Badge>
+                                                    </div>
+                                                    
+                                                    <div className="space-y-3">
+                                                        {userCert.certifications.map((cert, idx) => (
+                                                            <div key={idx} className="flex justify-between items-center p-4 rounded-lg bg-secondary/30 border border-border/40 hover:border-primary/30 transition-colors">
+                                                                <div className="flex-1">
+                                                                    <div className="font-semibold text-foreground mb-1">
+                                                                        {cert.certificationName}
+                                                                    </div>
+                                                                    <div className="text-sm text-muted-foreground">
+                                                                        <div className="flex items-center gap-4">
+                                                                            <span>Provider: {cert.provider || 'N/A'}</span>
+                                                                            <span>Completed: {new Date(cert.completedAt).toLocaleDateString()}</span>
+                                                                            {cert.expiresAt && (
+                                                                                <span>Expires: {new Date(cert.expiresAt).toLocaleDateString()}</span>
+                                                                            )}
+                                                                            <span className={`inline-flex items-center px-2 py-0.5 rounded-full text-xs font-bold ${
+                                                                                cert.isExternal 
+                                                                                    ? 'bg-purple-100 text-purple-700' 
+                                                                                    : 'bg-green-100 text-green-700'
+                                                                            }`}>
+                                                                                {cert.isExternal ? 'External' : 'Internal'}
+                                                                            </span>
+                                                                        </div>
+                                                                    </div>
+                                                                </div>
+                                                                <div className="flex items-center gap-2">
+                                                                    {cert.credentialUrl && (
+                                                                        <a
+                                                                            href={cert.credentialUrl}
+                                                                            target="_blank"
+                                                                            rel="noopener noreferrer"
+                                                                            className="text-primary hover:underline flex items-center gap-1 text-sm"
+                                                                        >
+                                                                            <ExternalLink className="h-3 w-3" />
+                                                                            View Credential
+                                                                        </a>
+                                                                    )}
+                                                                </div>
+                                                            </div>
+                                                        ))}
+                                                    </div>
+                                                </div>
+                                            ))}
+                                        </div>
+                                        
+                                        {/* Pagination */}
+                                        {completedTotal > completedPageSize && (
+                                            <div className="flex justify-center items-center gap-2 mt-6">
+                                                <Button
+                                                    variant="outline"
+                                                    size="sm"
+                                                    onClick={() => fetchCompletedCertifications(completedPage - 1)}
+                                                    disabled={completedPage <= 1 || completedLoading}
+                                                >
+                                                    Previous
+                                                </Button>
+                                                <span className="text-sm text-muted-foreground">
+                                                    Page {completedPage}
+                                                </span>
+                                                <Button
+                                                    variant="outline"
+                                                    size="sm"
+                                                    onClick={() => fetchCompletedCertifications(completedPage + 1)}
+                                                    disabled={(completedPage * completedPageSize) >= completedTotal || completedLoading}
+                                                >
+                                                    Next
+                                                </Button>
+                                            </div>
+                                        )}
+                                    </>
+                                )}
+                            </CardContent>
+                        </Card>
+                    </TabsContent>
+
+                    <TabsContent value="suggestions" className="space-y-6">
+                        <Card className="shadow-soft border-border/60 bg-card/80 backdrop-blur-sm">
+                            <CardHeader>
+                                <CardTitle className="text-xl">Certification Suggestions</CardTitle>
+                                <CardDescription>Review and manage certification suggestions submitted by users.</CardDescription>
+                            </CardHeader>
+                            <CardContent>
+                                {allSuggestions.length === 0 ? (
+                                    <div className="text-center py-16 border-2 border-dashed border-border/60 rounded-xl bg-zinc-50/30 dark:bg-zinc-900/30">
+                                        <p className="text-muted-foreground flex items-center justify-center gap-2">
+                                            <Plus className="h-5 w-5 text-blue-500" /> No certification suggestions yet.
+                                        </p>
+                                    </div>
+                                ) : (
+                                    <div className="rounded-xl border border-border/60 overflow-hidden shadow-sm">
+                                        <Table>
+                                            <TableHeader className="bg-secondary/50 dark:bg-zinc-900/50">
+                                                <TableRow>
+                                                    <TableHead className="py-4 font-bold">User</TableHead>
+                                                    <TableHead className="py-4 font-bold">Certification Name</TableHead>
+                                                    <TableHead className="py-4 font-bold">Provider</TableHead>
+                                                    <TableHead className="py-4 font-bold max-w-[200px]">Reason</TableHead>
+                                                    <TableHead className="py-4 font-bold">URL</TableHead>
+                                                    <TableHead className="py-4 font-bold">Date</TableHead>
+                                                    <TableHead className="py-4 font-bold">Status</TableHead>
+                                                    <TableHead className="py-4 text-right font-bold pr-6">Actions</TableHead>
+                                                </TableRow>
+                                            </TableHeader>
+                                            <TableBody>
+                                                {allSuggestions.map((suggestion) => (
+                                                    <TableRow key={suggestion.id} className="hover:bg-secondary/30 transition-colors">
+                                                        <TableCell className="py-4">
+                                                            <div className="flex flex-col">
+                                                                <span className="font-semibold text-foreground">{parseNameFromEmail(suggestion.profiles?.email)}</span>
+                                                                <span className="text-xs text-muted-foreground">{suggestion.profiles?.email}</span>
+                                                            </div>
+                                                        </TableCell>
+                                                        <TableCell className="py-4 font-medium">{suggestion.certificationName}</TableCell>
+                                                        <TableCell className="py-4 text-muted-foreground">{suggestion.provider || 'N/A'}</TableCell>
+                                                        <TableCell className="py-4 max-w-[200px] truncate" title={suggestion.reason}>{suggestion.reason}</TableCell>
+                                                        <TableCell className="py-4">
+                                                            {suggestion.url ? (
+                                                                <a
+                                                                    href={suggestion.url}
+                                                                    target="_blank"
+                                                                    rel="noopener noreferrer"
+                                                                    className="text-primary hover:underline flex items-center gap-1"
+                                                                >
+                                                                    <ExternalLink className="h-3 w-3" />
+                                                                    View
+                                                                </a>
+                                                            ) : (
+                                                                <span className="text-muted-foreground">N/A</span>
+                                                            )}
+                                                        </TableCell>
+                                                        <TableCell className="py-4 text-muted-foreground font-mono text-xs">
+                                                            {new Date(suggestion.createdAt).toLocaleDateString()}
+                                                        </TableCell>
+                                                        <TableCell className="py-4">
+                                                            <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-bold ${
+                                                                suggestion.status === 'approved' 
+                                                                    ? 'bg-green-100 text-green-700 dark:bg-green-900/30' 
+                                                                    : suggestion.status === 'rejected'
+                                                                        ? 'bg-red-100 text-red-700 dark:bg-red-900/30'
+                                                                        : 'bg-amber-100 text-amber-700 dark:bg-amber-900/30'
+                                                            }`}>
+                                                                {suggestion.status}
+                                                            </span>
+                                                        </TableCell>
+                                                        <TableCell className="py-4 text-right pr-6">
+                                                            <div className="flex justify-end gap-2">
+                                                                {suggestion.status === 'pending' && (
+                                                                    <>
+                                                                        <Button
+                                                                            size="icon"
+                                                                            variant="outline"
+                                                                            className="h-8 w-8 text-green-600 border-green-200 hover:bg-green-50 shadow-sm"
+                                                                            onClick={() => handleAcceptSuggestion(suggestion.id, suggestion.certificationName)}
+                                                                            disabled={isUpdating}
+                                                                        >
+                                                                            <Check className="h-4 w-4" />
+                                                                        </Button>
+                                                                        <Button
+                                                                            size="icon"
+                                                                            variant="outline"
+                                                                            className="h-8 w-8 text-destructive border-destructive/20 hover:bg-destructive/5 shadow-sm"
+                                                                            onClick={() => handleRejectSuggestion(suggestion.id)}
+                                                                            disabled={isUpdating}
+                                                                        >
+                                                                            <X className="h-4 w-4" />
+                                                                        </Button>
+                                                                    </>
+                                                                )}
+                                                            </div>
+                                                        </TableCell>
+                                                    </TableRow>
+                                                ))}
+                                            </TableBody>
+                                        </Table>
+                                    </div>
+                                )}
+                            </CardContent>
                         </Card>
                     </TabsContent>
                 </Tabs>
@@ -1131,6 +1535,13 @@ const AdminDashboard = () => {
                         </AlertDialogFooter>
                     </AlertDialogContent>
                 </AlertDialog>
+
+                <AcceptSuggestionDialog
+                    open={showAcceptDialog}
+                    onOpenChange={setShowAcceptDialog}
+                    onConfirm={handleConfirmAccept}
+                    suggestionName={selectedSuggestion?.name || ''}
+                />
             </div>
         </div>
     );

@@ -19,6 +19,27 @@ export interface CompletedCertification {
   expiresAt?: string;
 }
 
+export interface CertificationSuggestion {
+  id: string;
+  userId: string;
+  certificationName: string;
+  provider?: string;
+  reason: string;
+  url?: string;
+  status: 'pending' | 'approved' | 'rejected';
+  adminNotes?: string;
+  createdAt: string;
+  updatedAt: string;
+  profiles?: { email: string };
+}
+
+export interface UserCompletedCertifications {
+  userId: string;
+  userEmail: string;
+  completedCount: number;
+  certifications: CompletedCertification[];
+}
+
 export interface UserCertificationData {
   favorites: string[];
   applications: FundingApplication[];
