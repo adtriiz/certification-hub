@@ -1,4 +1,4 @@
-const https = require('https');
+import https from 'https';
 
 const SUPABASE_URL = process.env.SUPABASE_URL;
 const SUPABASE_KEY = process.env.SUPABASE_KEY;
